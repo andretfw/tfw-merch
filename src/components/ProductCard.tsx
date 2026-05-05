@@ -6,9 +6,10 @@ import { useCart } from "../context/CartContext";
 
 interface ProductCardProps {
   product: Product;
+  onOpenCheckout: () => void;
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({ product, onOpenCheckout }: ProductCardProps) {
   const { addToCart } = useCart();
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
@@ -26,10 +27,14 @@ export default function ProductCard({ product }: ProductCardProps) {
     setTimeout(() => setIsAdding(false), 1000);
   };
 
-  async function createCheckout() {
-    console.log("Preparing premium checkout for:", product.name);
-    alert(`Initiating secure checkout for ${product.name}... (Placeholder)`);
-  }
+  const handleOrderNow = () => {
+    if (!selectedSize) {
+      alert("Please select a size first.");
+      return;
+    }
+    addToCart(product, selectedSize, selectedColor, quantity);
+    onOpenCheckout();
+  };
 
   return (
     <motion.div
@@ -134,7 +139,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               )}
             </button>
             <button
-              onClick={createCheckout}
+              onClick={handleOrderNow}
               className="w-full py-5 text-brand-black font-bold uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-2 hover:opacity-50 transition-all group/btn"
             >
               Order Now

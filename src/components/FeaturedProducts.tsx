@@ -2,7 +2,7 @@ import ProductCard from "./ProductCard";
 import { products } from "../data/products";
 import { motion } from "motion/react";
 
-export default function FeaturedProducts({ filterCategory, onClearFilter }: { filterCategory: string | null, onClearFilter: () => void }) {
+export default function FeaturedProducts({ filterCategory, onClearFilter, onOpenCheckout }: { filterCategory: string | null, onClearFilter: () => void, onOpenCheckout: () => void }) {
   const filtered = products.filter(p => {
     const isFeatured = p.featured;
     if (!filterCategory) return isFeatured;
@@ -41,7 +41,7 @@ export default function FeaturedProducts({ filterCategory, onClearFilter }: { fi
           {filtered.length > 0 ? (
             filtered.map((product) => (
               <div key={product.id}>
-                <ProductCard product={product} />
+                <ProductCard product={product} onOpenCheckout={onOpenCheckout} />
               </div>
             ))
           ) : (

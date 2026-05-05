@@ -23,7 +23,6 @@ export default function App() {
   return (
     <CartProvider>
       <div className="min-h-screen bg-brand-cream selection:bg-brand-berry selection:text-white transition-colors duration-500">
-        <AnnouncementBar />
         <Header onOpenCart={() => setIsCartOpen(true)} />
 
         <main>
@@ -31,6 +30,7 @@ export default function App() {
           <FeaturedProducts 
             filterCategory={filterCategory} 
             onClearFilter={() => setFilterCategory(null)} 
+            onOpenCheckout={() => setIsCheckoutOpen(true)}
           />
           <CategorySection onSelectCategory={(cat) => setFilterCategory(cat)} />
           <ArtSection />

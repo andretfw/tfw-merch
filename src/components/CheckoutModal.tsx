@@ -79,12 +79,12 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             </div>
 
             {/* Right: Flow */}
-            <div className="flex-1 p-12 overflow-y-auto bg-brand-cream">
-              <div className="flex justify-between items-center mb-12">
-                <div className="flex gap-4 items-center">
-                  <div className={`w-8 h-8 rounded-full border flex items-center justify-center text-[10px] font-bold ${step === 'shipping' ? 'bg-brand-black text-white' : 'bg-transparent border-brand-black/20 text-brand-black'}`}>1</div>
-                  <div className="w-8 h-[1px] bg-brand-black/10" />
-                  <div className={`w-8 h-8 rounded-full border flex items-center justify-center text-[10px] font-bold ${step === 'payment' ? 'bg-brand-black text-white' : 'bg-transparent border-brand-black/20 text-brand-black'}`}>2</div>
+            <div className="flex-1 p-6 md:p-12 overflow-y-auto bg-brand-cream">
+              <div className="flex justify-between items-center mb-8 md:mb-12">
+                <div className="flex gap-3 md:gap-4 items-center">
+                  <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full border flex items-center justify-center text-[9px] md:text-[10px] font-bold ${step === 'shipping' ? 'bg-brand-black text-white' : 'bg-transparent border-brand-black/20 text-brand-black'}`}>1</div>
+                  <div className="w-6 md:w-8 h-[1px] bg-brand-black/10" />
+                  <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full border flex items-center justify-center text-[9px] md:text-[10px] font-bold ${step === 'payment' ? 'bg-brand-black text-white' : 'bg-transparent border-brand-black/20 text-brand-black'}`}>2</div>
                 </div>
                 <button onClick={handleClose} className="p-2 opacity-40 hover:opacity-100 transition-opacity">
                   <X size={20} strokeWidth={1} />
@@ -92,29 +92,29 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
               </div>
 
               {step === 'shipping' && (
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
-                  <h2 className="text-4xl font-serif italic mb-10">Delivery Details</h2>
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 md:space-y-8">
+                  <h2 className="text-3xl md:text-4xl font-serif italic mb-6 md:mb-10">Delivery Details</h2>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2 md:col-span-1 border-b border-brand-black/10 py-2">
                     <p className="text-[9px] uppercase tracking-widest font-bold opacity-30 mb-1">First Name</p>
-                    <input type="text" className="bg-transparent w-full focus:outline-none text-sm placeholder:opacity-20" placeholder="Avery" />
+                    <input type="text" className="bg-transparent w-full focus:outline-none text-sm placeholder:opacity-20 py-1" placeholder="Avery" />
                     </div>
                     <div className="col-span-2 md:col-span-1 border-b border-brand-black/10 py-2">
                     <p className="text-[9px] uppercase tracking-widest font-bold opacity-30 mb-1">Last Name</p>
-                    <input type="text" className="bg-transparent w-full focus:outline-none text-sm placeholder:opacity-20" placeholder="Smith" />
+                    <input type="text" className="bg-transparent w-full focus:outline-none text-sm placeholder:opacity-20 py-1" placeholder="Smith" />
                     </div>
                   </div>
                   <div className="border-b border-brand-black/10 py-2">
                     <p className="text-[9px] uppercase tracking-widest font-bold opacity-30 mb-1">Email Address</p>
-                    <input type="email" className="bg-transparent w-full focus:outline-none text-sm placeholder:opacity-20" placeholder="avery@example.com" />
+                    <input type="email" className="bg-transparent w-full focus:outline-none text-sm placeholder:opacity-20 py-1" placeholder="avery@example.com" />
                   </div>
                   <div className="border-b border-brand-black/10 py-2">
                     <p className="text-[9px] uppercase tracking-widest font-bold opacity-30 mb-1">Street Address</p>
-                    <input type="text" className="bg-transparent w-full focus:outline-none text-sm placeholder:opacity-20" placeholder="123 Bold Avenue" />
+                    <input type="text" className="bg-transparent w-full focus:outline-none text-sm placeholder:opacity-20 py-1" placeholder="123 Bold Avenue" />
                   </div>
                   <button 
                     onClick={() => setStep('payment')}
-                    className="w-full py-5 bg-brand-black text-white uppercase tracking-[0.2em] font-bold text-[10px] flex items-center justify-center gap-3 group mt-12"
+                    className="w-full py-5 bg-brand-black text-white uppercase tracking-[0.2em] font-bold text-[10px] flex items-center justify-center gap-3 group mt-8 md:mt-12"
                   >
                     Continue to Payment
                     <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
@@ -123,16 +123,16 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
               )}
 
               {step === 'payment' && (
-                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-10">
-                  <h2 className="text-4xl font-serif italic mb-10 text-brand-black">Choose Payment Method</h2>
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6 md:space-y-8">
+                  <h2 className="text-3xl md:text-4xl font-serif italic mb-6 md:mb-10 text-brand-black">Payment</h2>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-3 md:space-y-4">
                     <button 
                       onClick={() => setPaymentMethod('card')}
-                      className={`w-full flex items-center justify-between p-6 border transition-all ${paymentMethod === 'card' ? 'border-brand-black bg-white shadow-lg' : 'border-brand-black/10 opacity-60'}`}
+                      className={`w-full flex items-center justify-between p-4 md:p-6 border transition-all ${paymentMethod === 'card' ? 'border-brand-black bg-white shadow-lg' : 'border-brand-black/10 opacity-60'}`}
                     >
                       <div className="flex items-center gap-4">
-                        <CreditCard size={20} strokeWidth={1} />
+                        <CreditCard size={18} strokeWidth={1} />
                         <span className="text-[10px] uppercase tracking-widest font-bold">Credit / Debit Card</span>
                       </div>
                       <div className={`w-4 h-4 rounded-full border-2 ${paymentMethod === 'card' ? 'bg-brand-black border-brand-black' : 'border-brand-black/20'}`} />
@@ -140,7 +140,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
                     <button 
                       onClick={() => setPaymentMethod('paypal')}
-                      className={`w-full flex items-center justify-between p-6 border transition-all ${paymentMethod === 'paypal' ? 'border-brand-black bg-white shadow-lg' : 'border-brand-black/10 opacity-60'}`}
+                      className={`w-full flex items-center justify-between p-4 md:p-6 border transition-all ${paymentMethod === 'paypal' ? 'border-brand-black bg-white shadow-lg' : 'border-brand-black/10 opacity-60'}`}
                     >
                       <div className="flex items-center gap-4">
                         <span className="text-[10px] uppercase tracking-widest font-bold font-sans">PayPal</span>
@@ -150,10 +150,10 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
                     <button 
                       onClick={() => setPaymentMethod('wallet')}
-                      className={`w-full flex items-center justify-between p-6 border transition-all ${paymentMethod === 'wallet' ? 'border-brand-black bg-white shadow-lg' : 'border-brand-black/10 opacity-60'}`}
+                      className={`w-full flex items-center justify-between p-4 md:p-6 border transition-all ${paymentMethod === 'wallet' ? 'border-brand-black bg-white shadow-lg' : 'border-brand-black/10 opacity-60'}`}
                     >
                       <div className="flex items-center gap-4">
-                        <span className="text-[10px] uppercase tracking-widest font-bold">Apple / Google Pay</span>
+                        <span className="text-[10px] uppercase tracking-widest font-bold">Digital Wallet</span>
                       </div>
                       <div className={`w-4 h-4 rounded-full border-2 ${paymentMethod === 'wallet' ? 'bg-brand-black border-brand-black' : 'border-brand-black/20'}`} />
                     </button>
