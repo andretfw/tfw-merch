@@ -51,7 +51,7 @@ export default function ArtSection() {
 
             <div className="mt-8 text-center">
               <p className="font-serif italic text-sm opacity-50">
-                Tutti Frutti Women 73 (Inspired by a brave, bold and beautiful warrior)
+                Tutti Frutti Women 73 (Inspired by a bold, brave, and beautiful warrior)
               </p>
             </div>
           </div>
