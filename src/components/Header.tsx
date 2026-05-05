@@ -1,10 +1,12 @@
 import { ShoppingBag, Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useCart } from "../context/CartContext";
 
-export default function Header({ cartCount }: { cartCount: number }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function Header({ onOpenCart }: { onOpenCart: () => void }) {
+  const { totalItems } = useCart();
   const [scrolled, setScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -57,21 +59,23 @@ export default function Header({ cartCount }: { cartCount: number }) {
               </a>
             ))}
           </div>
-          <button className="relative p-2 text-brand-black group">
+          <button 
+            onClick={onOpenCart}
+            className="relative p-2 text-brand-black group"
+          >
             <ShoppingBag size={20} strokeWidth={1} />
             <span className="absolute top-1 right-0 w-4 h-4 bg-brand-black text-white text-[8px] font-bold flex items-center justify-center rounded-full transition-transform group-hover:scale-110">
-              {cartCount}
+              {totalItems}
             </span>
           </button>
-          <button className="md:hidden p-2 text-brand-black" onClick={() => setIsOpen(!isOpen)}>
-            {isOpen ? <X size={24} strokeWidth={1} /> : <Menu size={24} strokeWidth={1} />}
+          <button className="md:hidden p-2 text-brand-black" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            {isMenuOpen ? <X size={24} strokeWidth={1} /> : <Menu size={24} strokeWidth={1} />}
           </button>
         </div>
       </nav>
 
-      {/* Mobile Nav */}
       <AnimatePresence>
-        {isOpen && (
+        {isMenuOpen && (
           <motion.div
             initial={{ opacity: 0, x: "100%" }}
             animate={{ opacity: 1, x: 0 }}
@@ -81,7 +85,7 @@ export default function Header({ cartCount }: { cartCount: number }) {
             <div className="flex flex-col h-full p-12">
               <div className="flex justify-between items-center mb-20">
                 <span className="font-serif italic text-2xl font-semibold">TFW</span>
-                <button onClick={() => setIsOpen(false)}>
+                <button onClick={() => setIsMenuOpen(false)}>
                   <X size={32} strokeWidth={1} />
                 </button>
               </div>
@@ -91,7 +95,7 @@ export default function Header({ cartCount }: { cartCount: number }) {
                     key={link.name}
                     href={link.href}
                     className="text-4xl font-serif italic link-underline w-fit"
-                    onClick={() => setIsOpen(false)}
+                    onClick={() => setIsMenuOpen(false)}
                   >
                     {link.name}
                   </a>

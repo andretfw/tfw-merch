@@ -6,7 +6,7 @@ const faqs = [
   { q: "Are the pieces limited?", a: "Yes. Our collections feature specific artwork that rotates. Once an artwork series is archived, it may not return to the store." },
   { q: "Can I return or exchange an item?", a: "Because our items are printed fresh for each order, we can only offer returns for faulty or damaged goods. Please consult our sizing guide carefully." },
   { q: "How should I wash the apparel?", a: "To preserve the artwork, wash cold inside out and air dry. This keeps the print bold and the fabric soft for years." },
-  { q: "What payment methods are accepted?", a: "We accept all major credit cards, Apple Pay, and Google Pay through our secure Stripe checkout." },
+  { q: "What payment methods are accepted?", a: "We accept all major credit cards, Apple Pay, Google Pay, and PayPal through our secure checkout system." },
 ];
 
 export default function FAQ() {

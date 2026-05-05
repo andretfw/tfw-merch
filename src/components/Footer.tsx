@@ -53,6 +53,7 @@ export default function Footer() {
             <span>© 2024 Tutti Frutti Women</span>
             <span>All rights reserved</span>
           </div>
+          
           <div className="flex gap-8 text-[9px] font-bold uppercase tracking-widest opacity-40 italic">
             <span>tuttifruttiwomen.shop</span>
             <span className="hidden md:inline">•</span>
