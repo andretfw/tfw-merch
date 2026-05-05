@@ -54,12 +54,15 @@ export default function Hero() {
             className="gallery-frame w-full h-full"
           >
             <img 
-              src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1200" 
+              src="/images/tfw main.png"
               alt="TFW Campaign" 
               className="w-full h-full object-cover grayscale-[0.2]"
             />
+
             <div className="absolute top-8 right-8 bg-white/20 backdrop-blur-sm border border-white/30 px-6 py-2 rounded-full">
-              <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-white">Editorial 01</span>
+              <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-white">
+                Editorial 01
+              </span>
             </div>
           </motion.div>
           
