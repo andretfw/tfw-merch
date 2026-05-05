@@ -18,7 +18,7 @@ export default function ArtSection() {
           </p>
           
           <p className="text-brand-accent leading-relaxed mb-12">
-            Every piece begins with Tutti Frutti Women artwork — bold, feminine and created around visibility, courage, beauty and self-expression.
+            Every piece begins with Tutti Frutti Women artwork: bold, brave and created around visibility, courage, and beauty.
           </p>
           
           <a 
