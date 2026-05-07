@@ -35,7 +35,7 @@ export default function Hero() {
               href="#shop" 
               className="px-12 py-5 bg-brand-black text-white rounded-none font-medium tracking-widest text-[10px] uppercase hover:bg-brand-berry transition-colors text-center"
             >
-              Shop the Collection
+              Explore the Series
             </a>
             <a 
               href="#story" 
