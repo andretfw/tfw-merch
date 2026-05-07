@@ -36,12 +36,42 @@ export async function handler() {
       };
     }
 
+    const products = (data.data || []).map((product) => {
+      const enabledVariants = (product.variants || []).filter(
+        (variant) => variant.is_enabled
+      );
+
+      const firstVariant = enabledVariants[0] || product.variants?.[0];
+
+      const firstImage =
+        product.images?.[0]?.src ||
+        product.images?.[0]?.src_url ||
+        "";
+
+      return {
+        id: product.id,
+        title: product.title,
+        description: product.description,
+        image: firstImage,
+        price: firstVariant ? firstVariant.price / 100 : 0,
+        variants: enabledVariants.map((variant) => ({
+          id: variant.id,
+          title: variant.title,
+          price: variant.price / 100,
+          is_enabled: variant.is_enabled,
+        })),
+      };
+    });
+
     return {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",
+        "Cache-Control": "no-store",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        products,
+      }),
     };
   } catch (error) {
     return {
