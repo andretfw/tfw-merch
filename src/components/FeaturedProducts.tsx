@@ -108,7 +108,6 @@ export default function FeaturedProducts({
 
   const { addToCart } = useCart();
 
-  // Keeps old category filter props from breaking anything.
   void filterCategory;
   void onClearFilter;
 
@@ -173,7 +172,9 @@ export default function FeaturedProducts({
   }, [products]);
 
   const visibleProducts = productsWithMeta.filter((product) => {
-    const matchesSeries = selectedSeries ? product.seriesSlug === selectedSeries : true;
+    const matchesSeries = selectedSeries
+      ? product.seriesSlug === selectedSeries
+      : true;
 
     const matchesGender =
       selectedGender === "All"
@@ -191,8 +192,9 @@ export default function FeaturedProducts({
     const selectedVariantId = selectedVariants[product.id];
 
     const selectedVariant =
-      product.variants.find((variant: PrintifyVariant) => variant.id === selectedVariantId) ||
-      product.variants[0];
+      product.variants.find(
+        (variant: PrintifyVariant) => variant.id === selectedVariantId
+      ) || product.variants[0];
 
     if (!selectedVariant) {
       alert("This product has no available variants.");
@@ -226,255 +228,258 @@ export default function FeaturedProducts({
 
   const currentSeries = series.find((item) => item.slug === selectedSeries);
 
-  return (
-    <section id="shop" className="py-32 px-8 md:px-12 bg-white">
-      <div className="max-w-7xl mx-auto">
-        {!selectedSeries ? (
-          <>
-            <div className="mb-20 text-center">
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-4xl md:text-6xl font-serif italic mb-8"
-              >
-                Limited Series
-              </motion.h2>
+  if (selectedSeries && currentSeries) {
+    return (
+      <section id="shop" className="py-32 px-8 md:px-12 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-16 text-center relative z-10">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedSeries(null);
+                setSelectedGender("All");
+              }}
+              className="mb-10 text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 hover:opacity-100 transition-opacity"
+            >
+              ← Back to Limited Series
+            </button>
 
-              <p className="text-brand-accent max-w-xl mx-auto opacity-70">
-                Each drop begins with original TFW artwork and becomes a limited wearable statement.
+            <motion.h2
+              key={currentSeries.name}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-4xl md:text-6xl font-serif italic mb-8"
+            >
+              {currentSeries.name}
+            </motion.h2>
+
+            <p className="text-brand-accent max-w-xl mx-auto opacity-70">
+              {currentSeries.line}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap justify-center gap-3 mb-16 relative z-10">
+            {genderFilters.map((gender) => (
+              <button
+                key={gender}
+                type="button"
+                onClick={() => setSelectedGender(gender)}
+                className={`px-6 py-3 text-[10px] uppercase tracking-[0.25em] font-bold border transition-all ${
+                  selectedGender === gender
+                    ? "bg-brand-black text-white border-brand-black"
+                    : "border-brand-black/10 text-brand-black/50 hover:border-brand-black hover:text-brand-black"
+                }`}
+              >
+                {gender}
+              </button>
+            ))}
+          </div>
+
+          {apiError && (
+            <div className="py-10 text-center">
+              <p className="text-sm text-red-600 max-w-xl mx-auto">{apiError}</p>
+            </div>
+          )}
+
+          {!apiError && visibleProducts.length === 0 ? (
+            <div className="py-20 text-center">
+              <p className="font-serif italic text-2xl opacity-40">
+                No pieces in this selection yet.
               </p>
 
-              {loading && (
-                <p className="mt-8 text-[10px] uppercase tracking-[0.3em] font-bold opacity-30">
-                  Loading pieces...
-                </p>
-              )}
+              <p className="mt-4 text-sm text-brand-accent opacity-50">
+                Add products in Printify using this format:{" "}
+                <span className="font-bold">
+                  {currentSeries.name} | Women | Product Name
+                </span>
+              </p>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-12">
+              {visibleProducts.map((product, index) => {
+                const selectedVariantId = selectedVariants[product.id];
 
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-              {series.map((item, index) => {
-                const count = getSeriesCount(item.slug);
+                const selectedVariant =
+                  product.variants.find(
+                    (variant) => variant.id === selectedVariantId
+                  ) || product.variants[0];
+
+                const description = cleanDescription(product.description);
 
                 return (
-                  <motion.button
-                    key={item.slug}
-                    type="button"
-                    onClick={() => {
-                      setSelectedSeries(item.slug);
-                      setSelectedGender("All");
-                    }}
+                  <motion.div
+                    key={product.id}
                     initial={{ opacity: 0, y: 18 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.08, duration: 0.7 }}
                     viewport={{ once: true }}
-                    className="group text-left bg-brand-cream/50 border border-brand-black/5 p-5 hover:bg-brand-cream transition-all duration-500"
+                    className="group"
                   >
-                    <div className="aspect-[4/5] bg-white overflow-hidden mb-8 border border-brand-black/5">
-                      <img
-                        src={item.cover}
-                        alt={item.name}
-                        onError={(event) => {
-                          event.currentTarget.style.display = "none";
-                        }}
-                        className="w-full h-full object-cover grayscale-[0.15] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
-                      />
+                    <div className="bg-brand-cream aspect-[4/5] overflow-hidden mb-8 border border-brand-black/5">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.displayName}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-[10px] uppercase tracking-[0.4em] font-bold opacity-20">
+                            TFW
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    <p className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30 mb-4">
-                      {count > 0 ? `${count} pieces` : "Limited drop"}
-                    </p>
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-6">
+                        <div>
+                          <p className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30 mb-3">
+                            {product.gender}
+                          </p>
 
-                    <h3 className="text-3xl font-serif italic mb-4 group-hover:text-brand-berry transition-colors">
-                      {item.name}
-                    </h3>
+                          <h3 className="text-2xl font-serif italic leading-tight">
+                            {product.displayName}
+                          </h3>
+                        </div>
 
-                    <p className="text-sm text-brand-accent opacity-60 leading-relaxed">
-                      {item.line}
-                    </p>
+                        <p className="text-lg font-serif whitespace-nowrap">
+                          €{selectedVariant?.price || product.price}
+                        </p>
+                      </div>
 
-                    <p className="mt-8 text-[10px] uppercase tracking-[0.3em] font-bold">
-                      Enter Series →
-                    </p>
-                  </motion.button>
+                      {description && (
+                        <p className="text-sm text-brand-accent opacity-60 leading-relaxed">
+                          {description.slice(0, 130)}...
+                        </p>
+                      )}
+
+                      {product.variants.length > 0 && (
+                        <div className="pt-2">
+                          <label className="block text-[9px] uppercase tracking-[0.25em] font-bold opacity-30 mb-3">
+                            Size / Color
+                          </label>
+
+                          <select
+                            value={selectedVariantId || ""}
+                            onChange={(event) =>
+                              setSelectedVariants((prev) => ({
+                                ...prev,
+                                [product.id]: Number(event.target.value),
+                              }))
+                            }
+                            className="w-full bg-transparent border border-brand-black/10 px-4 py-3 text-xs uppercase tracking-widest focus:outline-none"
+                          >
+                            {product.variants.map((variant) => (
+                              <option key={variant.id} value={variant.id}>
+                                {variant.title} — €{variant.price}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 gap-3 pt-3">
+                        <button
+                          type="button"
+                          onClick={() => handleAddToCart(product)}
+                          className="w-full py-4 bg-brand-black text-white uppercase tracking-[0.2em] font-bold text-[10px] flex items-center justify-center gap-3 hover:bg-brand-berry transition-colors"
+                        >
+                          Add to Bag
+                          <ShoppingBag size={14} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleOrderNow(product)}
+                          className="w-full py-4 border border-brand-black/20 text-brand-black uppercase tracking-[0.2em] font-bold text-[10px] hover:border-brand-black transition-colors"
+                        >
+                          Order Now
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
                 );
               })}
             </div>
-          </>
-        ) : (
-          <>
-            <div className="mb-16 text-center">
-              <button
+          )}
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section id="shop" className="py-32 px-8 md:px-12 bg-white overflow-hidden">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-20 text-center">
+          <motion.h2
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-6xl font-serif italic mb-8"
+          >
+            Limited Series
+          </motion.h2>
+
+          <p className="text-brand-accent max-w-xl mx-auto opacity-70">
+            Each drop begins with original TFW artwork and becomes a limited wearable statement.
+          </p>
+
+          {loading && (
+            <p className="mt-8 text-[10px] uppercase tracking-[0.3em] font-bold opacity-30">
+              Loading pieces...
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+          {series.map((item, index) => {
+            const count = getSeriesCount(item.slug);
+
+            return (
+              <motion.button
+                key={item.slug}
                 type="button"
                 onClick={() => {
-                  setSelectedSeries(null);
+                  setSelectedSeries(item.slug);
                   setSelectedGender("All");
                 }}
-                className="mb-10 text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 hover:opacity-100 transition-opacity"
-              >
-                ← Back to Limited Series
-              </button>
-
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.08, duration: 0.7 }}
                 viewport={{ once: true }}
-                className="text-4xl md:text-6xl font-serif italic mb-8"
+                className="group text-left bg-brand-cream/50 border border-brand-black/5 p-5 hover:bg-brand-cream transition-all duration-500"
               >
-                {currentSeries?.name}
-              </motion.h2>
+                <div className="aspect-[4/5] bg-white overflow-hidden mb-8 border border-brand-black/5">
+                  <img
+                    src={item.cover}
+                    alt={item.name}
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                    }}
+                    className="w-full h-full object-cover grayscale-[0.15] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+                  />
+                </div>
 
-              <p className="text-brand-accent max-w-xl mx-auto opacity-70">
-                {currentSeries?.line}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-3 mb-16">
-              {genderFilters.map((gender) => (
-                <button
-                  key={gender}
-                  type="button"
-                  onClick={() => setSelectedGender(gender)}
-                  className={`px-6 py-3 text-[10px] uppercase tracking-[0.25em] font-bold border transition-all ${
-                    selectedGender === gender
-                      ? "bg-brand-black text-white border-brand-black"
-                      : "border-brand-black/10 text-brand-black/50 hover:border-brand-black hover:text-brand-black"
-                  }`}
-                >
-                  {gender}
-                </button>
-              ))}
-            </div>
-
-            {apiError && (
-              <div className="py-10 text-center">
-                <p className="text-sm text-red-600 max-w-xl mx-auto">{apiError}</p>
-              </div>
-            )}
-
-            {!apiError && visibleProducts.length === 0 ? (
-              <div className="py-20 text-center">
-                <p className="font-serif italic text-2xl opacity-40">
-                  No pieces in this selection yet.
+                <p className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30 mb-4">
+                  {count > 0 ? `${count} pieces` : "Limited drop"}
                 </p>
 
-                <p className="mt-4 text-sm text-brand-accent opacity-50">
-                  Add products in Printify using this format:{" "}
-                  <span className="font-bold">
-                    {currentSeries?.name} | Women | Product Name
-                  </span>
+                <h3 className="text-3xl font-serif italic mb-4 group-hover:text-brand-berry transition-colors">
+                  {item.name}
+                </h3>
+
+                <p className="text-sm text-brand-accent opacity-60 leading-relaxed">
+                  {item.line}
                 </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-12">
-                {visibleProducts.map((product, index) => {
-                  const selectedVariantId = selectedVariants[product.id];
 
-                  const selectedVariant =
-                    product.variants.find((variant) => variant.id === selectedVariantId) ||
-                    product.variants[0];
-
-                  const description = cleanDescription(product.description);
-
-                  return (
-                    <motion.div
-                      key={product.id}
-                      initial={{ opacity: 0, y: 18 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.08, duration: 0.7 }}
-                      viewport={{ once: true }}
-                      className="group"
-                    >
-                      <div className="bg-brand-cream aspect-[4/5] overflow-hidden mb-8 border border-brand-black/5">
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={product.displayName}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-[10px] uppercase tracking-[0.4em] font-bold opacity-20">
-                              TFW
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="flex items-start justify-between gap-6">
-                          <div>
-                            <p className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30 mb-3">
-                              {product.gender}
-                            </p>
-
-                            <h3 className="text-2xl font-serif italic leading-tight">
-                              {product.displayName}
-                            </h3>
-                          </div>
-
-                          <p className="text-lg font-serif whitespace-nowrap">
-                            €{selectedVariant?.price || product.price}
-                          </p>
-                        </div>
-
-                        {description && (
-                          <p className="text-sm text-brand-accent opacity-60 leading-relaxed">
-                            {description.slice(0, 130)}...
-                          </p>
-                        )}
-
-                        {product.variants.length > 0 && (
-                          <div className="pt-2">
-                            <label className="block text-[9px] uppercase tracking-[0.25em] font-bold opacity-30 mb-3">
-                              Size / Color
-                            </label>
-
-                            <select
-                              value={selectedVariantId || ""}
-                              onChange={(event) =>
-                                setSelectedVariants((prev) => ({
-                                  ...prev,
-                                  [product.id]: Number(event.target.value),
-                                }))
-                              }
-                              className="w-full bg-transparent border border-brand-black/10 px-4 py-3 text-xs uppercase tracking-widest focus:outline-none"
-                            >
-                              {product.variants.map((variant) => (
-                                <option key={variant.id} value={variant.id}>
-                                  {variant.title} — €{variant.price}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-
-                        <div className="grid grid-cols-1 gap-3 pt-3">
-                          <button
-                            type="button"
-                            onClick={() => handleAddToCart(product)}
-                            className="w-full py-4 bg-brand-black text-white uppercase tracking-[0.2em] font-bold text-[10px] flex items-center justify-center gap-3 hover:bg-brand-berry transition-colors"
-                          >
-                            Add to Bag
-                            <ShoppingBag size={14} />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => handleOrderNow(product)}
-                            className="w-full py-4 border border-brand-black/20 text-brand-black uppercase tracking-[0.2em] font-bold text-[10px] hover:border-brand-black transition-colors"
-                          >
-                            Order Now
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-            )}
-          </>
-        )}
+                <p className="mt-8 text-[10px] uppercase tracking-[0.3em] font-bold">
+                  Enter Series →
+                </p>
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
