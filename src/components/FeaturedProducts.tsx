@@ -24,21 +24,25 @@ const series = [
     slug: "seen",
     name: "The Seen Series",
     line: "For the ones who refused to disappear quietly.",
+    cover: "/images/seen-series.png",
   },
   {
     slug: "brave",
     name: "The Brave Series",
     line: "For the quiet kind of brave. The kind nobody claps for, but everything depends on.",
+    cover: "/images/brave-series.png",
   },
   {
     slug: "chaotic",
     name: "The Chaotic Series",
     line: "For the ones who turned the mess into identity.",
+    cover: "/images/chaotic-series.png",
   },
   {
     slug: "fruit-loop",
     name: "The Fruit Loop Series",
     line: "For the colorful ones. The fruity ones. The beautifully unbothered.",
+    cover: "/images/fruit-loop-series.png",
   },
 ];
 
@@ -100,18 +104,32 @@ export default function FeaturedProducts({
   const [selectedSeries, setSelectedSeries] = useState<string | null>(null);
   const [selectedGender, setSelectedGender] = useState("All");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [apiError, setApiError] = useState("");
 
   const { addToCart } = useCart();
+
+  // Keeps old category filter props from breaking anything.
+  void filterCategory;
+  void onClearFilter;
 
   useEffect(() => {
     async function loadProducts() {
       try {
         setLoading(true);
-        setError("");
+        setApiError("");
 
         const response = await fetch("/.netlify/functions/printify-products");
-        const data = await response.json();
+        const rawText = await response.text();
+
+        let data;
+
+        try {
+          data = JSON.parse(rawText);
+        } catch {
+          throw new Error(
+            "The Printify products endpoint returned HTML instead of JSON. Check the Netlify function deployment."
+          );
+        }
 
         if (!response.ok) {
           throw new Error(data.error || "Could not load Printify products.");
@@ -130,7 +148,7 @@ export default function FeaturedProducts({
 
         setSelectedVariants(defaults);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong.");
+        setApiError(err instanceof Error ? err.message : "Something went wrong.");
       } finally {
         setLoading(false);
       }
@@ -167,10 +185,6 @@ export default function FeaturedProducts({
 
   const getSeriesCount = (slug: string) => {
     return productsWithMeta.filter((product) => product.seriesSlug === slug).length;
-  };
-
-  const getSeriesImage = (slug: string) => {
-    return productsWithMeta.find((product) => product.seriesSlug === slug)?.image;
   };
 
   const handleAddToCart = (product: any) => {
@@ -230,76 +244,62 @@ export default function FeaturedProducts({
               <p className="text-brand-accent max-w-xl mx-auto opacity-70">
                 Each drop begins with original TFW artwork and becomes a limited wearable statement.
               </p>
+
+              {loading && (
+                <p className="mt-8 text-[10px] uppercase tracking-[0.3em] font-bold opacity-30">
+                  Loading pieces...
+                </p>
+              )}
             </div>
 
-            {loading && (
-              <p className="text-center text-[10px] uppercase tracking-[0.3em] font-bold opacity-40">
-                Loading series...
-              </p>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+              {series.map((item, index) => {
+                const count = getSeriesCount(item.slug);
 
-            {error && (
-              <p className="text-center text-sm text-red-600">
-                {error}
-              </p>
-            )}
+                return (
+                  <motion.button
+                    key={item.slug}
+                    type="button"
+                    onClick={() => {
+                      setSelectedSeries(item.slug);
+                      setSelectedGender("All");
+                    }}
+                    initial={{ opacity: 0, y: 18 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.08, duration: 0.7 }}
+                    viewport={{ once: true }}
+                    className="group text-left bg-brand-cream/50 border border-brand-black/5 p-5 hover:bg-brand-cream transition-all duration-500"
+                  >
+                    <div className="aspect-[4/5] bg-white overflow-hidden mb-8 border border-brand-black/5">
+                      <img
+                        src={item.cover}
+                        alt={item.name}
+                        onError={(event) => {
+                          event.currentTarget.style.display = "none";
+                        }}
+                        className="w-full h-full object-cover grayscale-[0.15] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+                      />
+                    </div>
 
-            {!loading && !error && (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
-                {series.map((item, index) => {
-                  const image = getSeriesImage(item.slug);
-                  const count = getSeriesCount(item.slug);
+                    <p className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30 mb-4">
+                      {count > 0 ? `${count} pieces` : "Limited drop"}
+                    </p>
 
-                  return (
-                    <motion.button
-                      key={item.slug}
-                      type="button"
-                      onClick={() => {
-                        setSelectedSeries(item.slug);
-                        setSelectedGender("All");
-                      }}
-                      initial={{ opacity: 0, y: 18 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.08, duration: 0.7 }}
-                      viewport={{ once: true }}
-                      className="group text-left bg-brand-cream/50 border border-brand-black/5 p-5 hover:bg-brand-cream transition-all duration-500"
-                    >
-                      <div className="aspect-[4/5] bg-white overflow-hidden mb-8 border border-brand-black/5">
-                        {image ? (
-                          <img
-                            src={image}
-                            alt={item.name}
-                            className="w-full h-full object-cover grayscale-[0.15] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-[10px] uppercase tracking-[0.4em] font-bold opacity-20">
-                              Coming Soon
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                    <h3 className="text-3xl font-serif italic mb-4 group-hover:text-brand-berry transition-colors">
+                      {item.name}
+                    </h3>
 
-                      <p className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30 mb-4">
-                        {count > 0 ? `${count} pieces` : "Coming soon"}
-                      </p>
+                    <p className="text-sm text-brand-accent opacity-60 leading-relaxed">
+                      {item.line}
+                    </p>
 
-                      <h3 className="text-3xl font-serif italic mb-4 group-hover:text-brand-berry transition-colors">
-                        {item.name}
-                      </h3>
-
-                      <p className="text-sm text-brand-accent opacity-60 leading-relaxed">
-                        {item.line}
-                      </p>
-
-                      <p className="mt-8 text-[10px] uppercase tracking-[0.3em] font-bold">
-                        Enter Series →
-                      </p>
-                    </motion.button>
-                  );
-                })}
-              </div>
-            )}
+                    <p className="mt-8 text-[10px] uppercase tracking-[0.3em] font-bold">
+                      Enter Series →
+                    </p>
+                  </motion.button>
+                );
+              })}
+            </div>
           </>
         ) : (
           <>
@@ -346,10 +346,23 @@ export default function FeaturedProducts({
               ))}
             </div>
 
-            {visibleProducts.length === 0 ? (
+            {apiError && (
+              <div className="py-10 text-center">
+                <p className="text-sm text-red-600 max-w-xl mx-auto">{apiError}</p>
+              </div>
+            )}
+
+            {!apiError && visibleProducts.length === 0 ? (
               <div className="py-20 text-center">
                 <p className="font-serif italic text-2xl opacity-40">
                   No pieces in this selection yet.
+                </p>
+
+                <p className="mt-4 text-sm text-brand-accent opacity-50">
+                  Add products in Printify using this format:{" "}
+                  <span className="font-bold">
+                    {currentSeries?.name} | Women | Product Name
+                  </span>
                 </p>
               </div>
             ) : (
