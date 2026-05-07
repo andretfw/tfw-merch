@@ -72,12 +72,8 @@ export default function Hero() {
             transition={{ delay: 0.8, duration: 1 }}
             className="absolute -bottom-10 -left-10 gallery-frame w-64 h-80 z-20"
           >
-            <img 
-              src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&q=80&w=600" 
-              alt="Detail" 
-              className="w-full h-full object-cover"
+      
             />
-          </motion.div>
         </div>
       </div>
       
