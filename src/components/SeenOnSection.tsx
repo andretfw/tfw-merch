@@ -5,22 +5,27 @@ const events = [
   {
     name: "Times Square",
     images: ["/images/TIMES SQUARE.JPG", "/images/times square.png"],
+    imageStyle: "cover",
   },
   {
     name: "NFT.NYC",
     images: ["/images/nftnyc2025.png"],
+    imageStyle: "contain",
   },
   {
     name: "NFC Lisbon",
     images: ["/images/NFC LISBON.JPG", "/images/NFC LISBON.jpeg"],
+    imageStyle: "cover",
   },
   {
     name: "WebX Asia",
     images: ["/images/WEBX TFW.JPG"],
+    imageStyle: "cover",
   },
   {
     name: "BitBasel",
-    images: [],
+    images: ["/images/bitbasel.png"],
+    imageStyle: "cover",
   },
 ];
 
@@ -31,6 +36,7 @@ function EventCard({
   event: {
     name: string;
     images: string[];
+    imageStyle: string;
   };
   index: number;
 }) {
@@ -46,6 +52,8 @@ function EventCard({
     return () => clearInterval(interval);
   }, [event.images.length]);
 
+  const isContain = event.imageStyle === "contain";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -54,29 +62,29 @@ function EventCard({
       viewport={{ once: true }}
       className="group bg-white/60 border border-brand-black/5 p-5 md:p-6 hover:bg-white transition-all duration-500"
     >
-      <div className="aspect-[4/3] bg-brand-cream overflow-hidden relative mb-7">
-        {event.images.length > 0 ? (
-          event.images.map((image, imageIndex) => (
-            <motion.img
-              key={image}
-              src={image}
-              alt={event.name}
-              initial={false}
-              animate={{
-                opacity: currentImage === imageIndex ? 1 : 0,
-                scale: currentImage === imageIndex ? 1 : 1.04,
-              }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-0 w-full h-full object-cover grayscale-[0.15] group-hover:grayscale-0 transition-all duration-700"
-            />
-          ))
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-white">
-            <span className="text-[10px] uppercase tracking-[0.4em] font-bold opacity-20">
-              TFW
-            </span>
-          </div>
-        )}
+      <div
+        className={`aspect-[4/3] overflow-hidden relative mb-7 border border-brand-black/5 ${
+          isContain ? "bg-white p-5 md:p-6" : "bg-brand-cream"
+        }`}
+      >
+        {event.images.map((image, imageIndex) => (
+          <motion.img
+            key={image}
+            src={image}
+            alt={event.name}
+            initial={false}
+            animate={{
+              opacity: currentImage === imageIndex ? 1 : 0,
+              scale: currentImage === imageIndex ? 1 : 1.04,
+            }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className={`absolute transition-all duration-700 ${
+              isContain
+                ? "inset-5 md:inset-6 w-[calc(100%-2.5rem)] md:w-[calc(100%-3rem)] h-[calc(100%-2.5rem)] md:h-[calc(100%-3rem)] object-contain"
+                : "inset-0 w-full h-full object-cover grayscale-[0.15] group-hover:grayscale-0"
+            }`}
+          />
+        ))}
 
         <div className="absolute inset-0 bg-brand-black/0 group-hover:bg-brand-black/[0.03] transition-colors" />
       </div>
