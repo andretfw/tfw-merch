@@ -16,13 +16,13 @@ export default function StorySection() {
           
           <div className="space-y-10 max-w-3xl mx-auto">
             <p className="text-2xl md:text-4xl font-serif italic text-brand-black leading-tight">
-              “Tutti Frutti Women was created for women who were judged, underestimated, or made to feel invisible — and still chose color, courage and beauty.”
+              “Tutti Frutti Women was created for women who were judged, underestimated, or made to feel invisible during their hardest seasons, and still chose color, courage, and beauty.”
             </p>
             
             <div className="w-16 h-[1px] bg-brand-berry/30 mx-auto" />
             
             <p className="text-brand-accent tracking-wide opacity-60 text-sm leading-relaxed max-w-xl mx-auto">
-              Our pieces carry the weight of visibility. We lead with art, follow with purpose, and finish with real human connection.
+              Every piece begins with art, carries a purpose, and ends with real human connection.
             </p>
           </div>
         </motion.div>
