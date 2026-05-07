@@ -23,7 +23,7 @@ export default function Newsletter() {
           viewport={{ once: true }}
         >
           <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold opacity-30 mb-8">Stay Seen</h3>
-          <h2 className="text-4xl md:text-6xl font-serif italic mb-8">Join the Inner Circle</h2>
+          <h2 className="text-4xl md:text-6xl font-serif italic mb-8">Join the frutti loop</h2>
           <p className="text-brand-accent max-w-sm mx-auto opacity-60 mb-12 italic">
             Receive early access to new artwork series and limited wearable releases.
           </p>
