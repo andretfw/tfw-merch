@@ -4,19 +4,23 @@ import { useEffect, useState } from "react";
 const artworks = [
   {
     src: "/images/73.png",
-    caption: "Tutti Frutti Women 73 — inspired by a bold, brave, and beautiful warrior.",
+    caption:
+      "Tutti Frutti Women 73 — inspired by a bold, brave, and beautiful warrior.",
   },
   {
     src: "/images/44.png",
-    caption: "Tutti Frutti Women 44 — art made to be seen, worn, and remembered.",
+    caption:
+      "Tutti Frutti Women 44 — art made to be seen, worn, and remembered.",
   },
   {
     src: "/images/67.png",
-    caption: "Tutti Frutti Women 67 — visibility, courage, and beauty in one piece.",
+    caption:
+      "Tutti Frutti Women 67 — visibility, courage, and beauty in one piece.",
   },
   {
     src: "/images/358.png",
-    caption: "Tutti Frutti Women 358 — from original artwork to wearable statement.",
+    caption:
+      "Tutti Frutti Women 358 — from original artwork to wearable statement.",
   },
 ];
 
@@ -73,18 +77,23 @@ export default function ArtSection() {
         >
           <div className="gallery-frame rotate-2 bg-white p-8 md:p-12">
             <div className="aspect-[4/5] bg-brand-cream overflow-hidden relative">
-              <AnimatePresence mode="wait">
+              {artworks.map((artwork, index) => (
                 <motion.img
-                  key={artworks[currentArtwork].src}
-                  src={artworks[currentArtwork].src}
+                  key={artwork.src}
+                  src={artwork.src}
                   alt="TFW Artwork"
-                  initial={{ opacity: 0, scale: 1.04 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96 }}
-                  transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                  initial={false}
+                  animate={{
+                    opacity: currentArtwork === index ? 1 : 0,
+                    scale: currentArtwork === index ? 1 : 1.04,
+                  }}
+                  transition={{
+                    duration: 0.9,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
                   className="absolute inset-0 w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-1000"
                 />
-              </AnimatePresence>
+              ))}
             </div>
 
             <div className="mt-8 text-center">
