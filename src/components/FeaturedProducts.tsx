@@ -288,7 +288,7 @@ export default function FeaturedProducts({
               </p>
 
               <p className="mt-4 text-sm text-brand-accent opacity-50">
-                Add products in Printify using this format:{" "}
+                
                 <span className="font-bold">
                   {currentSeries.name} | Women | Product Name
                 </span>
