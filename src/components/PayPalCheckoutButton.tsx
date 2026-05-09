@@ -22,12 +22,14 @@ interface ShippingDetails {
 interface PayPalCheckoutButtonProps {
   totalPrice: number;
   shippingDetails: ShippingDetails;
+  cartItems: any[];
   onSuccess: () => void;
 }
 
 export default function PayPalCheckoutButton({
   totalPrice,
   shippingDetails,
+  cartItems,
   onSuccess,
 }: PayPalCheckoutButtonProps) {
   const paypalRef = useRef<HTMLDivElement | null>(null);
@@ -80,6 +82,8 @@ export default function PayPalCheckoutButton({
           },
 
           onApprove: async (data: any) => {
+            setErrorMessage("");
+
             const response = await fetch("/.netlify/functions/paypal-capture-order", {
               method: "POST",
               headers: {
@@ -87,13 +91,21 @@ export default function PayPalCheckoutButton({
               },
               body: JSON.stringify({
                 orderID: data.orderID,
+                cartItems,
+                shippingDetails,
               }),
             });
 
             const captureData = await response.json();
 
             if (!response.ok) {
-              setErrorMessage(captureData.error || "Could not capture PayPal payment.");
+              console.error("PayPal / POD order error:", captureData);
+
+              setErrorMessage(
+                captureData.error ||
+                  "Payment was captured, but the production order could not be created. Please contact us."
+              );
+
               return;
             }
 
@@ -122,14 +134,16 @@ export default function PayPalCheckoutButton({
     script.onload = renderButtons;
     script.onerror = () => setErrorMessage("Could not load PayPal.");
     document.body.appendChild(script);
-  }, [totalPrice, shippingDetails, onSuccess]);
+  }, [totalPrice, shippingDetails, cartItems, onSuccess]);
 
   return (
     <div className="space-y-4">
       <div ref={paypalRef} />
 
       {errorMessage && (
-        <p className="text-xs text-red-600 tracking-wide">{errorMessage}</p>
+        <p className="text-xs text-red-600 tracking-wide leading-relaxed">
+          {errorMessage}
+        </p>
       )}
     </div>
   );
