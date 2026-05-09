@@ -92,7 +92,7 @@ export async function handler(event) {
       const siteUrl = getSiteUrl(event);
 
       const podResponse = await fetch(
-        `${siteUrl}/.netlify/functions/create-printify-order`,
+        `${siteUrl}/.netlify/functions/create-pod-order`,
         {
           method: "POST",
           headers: {
