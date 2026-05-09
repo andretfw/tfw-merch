@@ -15,10 +15,12 @@ function getPrintfulHeaders() {
 function cleanPrintfulVariantTitle(productName, variantName) {
   if (!variantName) return "Default";
 
-  return variantName
-    .replace(productName, "")
-    .replace(/^[-–—|/ ]+/, "")
-    .trim() || variantName;
+  return (
+    variantName
+      .replace(productName, "")
+      .replace(/^[-–—|/ ]+/, "")
+      .trim() || variantName
+  );
 }
 
 async function getPrintifyProducts() {
@@ -58,7 +60,13 @@ async function getPrintifyProducts() {
       originalProductId: product.id,
       title: product.title,
       description: product.description || "",
-      image: `/.netlify/functions/printify-image?productId=${product.id}&index=0`,
+
+      image:
+        product.images?.[0]?.src ||
+        product.images?.[0]?.src_url ||
+        product.images?.[0]?.preview_url ||
+        "",
+
       price: firstVariant ? firstVariant.price / 100 : 0,
       variants: enabledVariants.map((variant) => ({
         id: variant.id,
@@ -132,7 +140,10 @@ async function getPrintfulProducts() {
           .filter((variant) => variant.synced !== false)
           .map((variant) => ({
             id: variant.id,
-            title: cleanPrintfulVariantTitle(syncProduct?.name || product.name, variant.name),
+            title: cleanPrintfulVariantTitle(
+              syncProduct?.name || product.name,
+              variant.name
+            ),
             price: Number(variant.retail_price || price || 0),
             is_enabled: variant.synced !== false,
             provider: "printful",
