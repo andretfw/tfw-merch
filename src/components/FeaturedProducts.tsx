@@ -8,10 +8,15 @@ interface PrintifyVariant {
   title: string;
   price: number;
   is_enabled: boolean;
+  provider?: "printify" | "printful";
+  printifyVariantId?: number | string;
+  printfulVariantId?: number | string;
 }
 
 interface PrintifyProduct {
   id: string;
+  provider?: "printify" | "printful";
+  originalProductId?: string;
   title: string;
   description: string;
   image: string;
@@ -126,12 +131,12 @@ export default function FeaturedProducts({
           data = JSON.parse(rawText);
         } catch {
           throw new Error(
-            "The Printify products endpoint returned HTML instead of JSON. Check the Netlify function deployment."
+            "The product endpoint returned HTML instead of JSON. Check the Netlify function deployment."
           );
         }
 
         if (!response.ok) {
-          throw new Error(data.error || "Could not load Printify products.");
+          throw new Error(data.error || "Could not load products.");
         }
 
         const loadedProducts: PrintifyProduct[] = data.products || [];
@@ -212,8 +217,22 @@ export default function FeaturedProducts({
         image: product.image,
         category: product.seriesName,
         featured: true,
-        printifyProductId: product.id,
-        printifyVariantId: selectedVariant.id,
+
+        provider: product.provider,
+        originalProductId: product.originalProductId,
+
+        printifyProductId:
+          product.provider === "printify" ? product.originalProductId : undefined,
+
+        printifyVariantId:
+          product.provider === "printify"
+            ? selectedVariant.printifyVariantId || selectedVariant.id
+            : undefined,
+
+        printfulVariantId:
+          product.provider === "printful"
+            ? selectedVariant.printfulVariantId || selectedVariant.id
+            : undefined,
       } as any,
       size,
       color,
@@ -288,7 +307,6 @@ export default function FeaturedProducts({
               </p>
 
               <p className="mt-4 text-sm text-brand-accent opacity-50">
-                
                 <span className="font-bold">
                   {currentSeries.name} | Women | Product Name
                 </span>
