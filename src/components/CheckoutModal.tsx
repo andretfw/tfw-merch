@@ -121,9 +121,11 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                         <p className="text-[10px] font-bold uppercase tracking-widest leading-tight">
                           {item.product.name}
                         </p>
+
                         <p className="text-[9px] opacity-40 uppercase tracking-tighter mt-1">
                           {item.size} • {item.color} • x{item.quantity}
                         </p>
+
                         <p className="text-[10px] font-medium mt-2">
                           €{item.product.price * item.quantity}
                         </p>
@@ -138,11 +140,13 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                   <span className="text-[10px] uppercase tracking-widest font-bold opacity-30">
                     Total
                   </span>
+
                   <span className="text-2xl font-serif">€{totalPrice}</span>
                 </div>
 
                 <div className="flex items-center gap-2 opacity-30">
                   <ShieldCheck size={12} />
+
                   <span className="text-[9px] uppercase tracking-widest font-bold">
                     Secure Checkout
                   </span>
@@ -199,6 +203,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                   <div className="grid grid-cols-2 gap-4">
                     <div className={`col-span-2 md:col-span-1 ${fieldWrapClass}`}>
                       <p className={labelClass}>First Name *</p>
+
                       <input
                         name="firstName"
                         type="text"
@@ -212,6 +217,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
                     <div className={`col-span-2 md:col-span-1 ${fieldWrapClass}`}>
                       <p className={labelClass}>Last Name *</p>
+
                       <input
                         name="lastName"
                         type="text"
@@ -227,6 +233,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                   <div className="grid grid-cols-2 gap-4">
                     <div className={`col-span-2 md:col-span-1 ${fieldWrapClass}`}>
                       <p className={labelClass}>Email Address *</p>
+
                       <input
                         name="email"
                         type="email"
@@ -240,6 +247,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
                     <div className={`col-span-2 md:col-span-1 ${fieldWrapClass}`}>
                       <p className={labelClass}>Phone Number *</p>
+
                       <input
                         name="phone"
                         type="tel"
@@ -254,6 +262,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
                   <div className={fieldWrapClass}>
                     <p className={labelClass}>Country *</p>
+
                     <select
                       name="country"
                       required
@@ -262,20 +271,46 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                       className={`${inputClass} cursor-pointer`}
                     >
                       <option value="">Select country</option>
+
                       <option value="RO">Romania</option>
                       <option value="ES">Spain</option>
                       <option value="PT">Portugal</option>
                       <option value="IT">Italy</option>
                       <option value="FR">France</option>
                       <option value="DE">Germany</option>
+                      <option value="NL">Netherlands</option>
+                      <option value="BE">Belgium</option>
+                      <option value="AT">Austria</option>
+                      <option value="CH">Switzerland</option>
+                      <option value="SE">Sweden</option>
+                      <option value="NO">Norway</option>
+                      <option value="DK">Denmark</option>
+                      <option value="FI">Finland</option>
+                      <option value="IE">Ireland</option>
+                      <option value="PL">Poland</option>
+                      <option value="CZ">Czech Republic</option>
+                      <option value="HU">Hungary</option>
+                      <option value="GR">Greece</option>
+                      <option value="BG">Bulgaria</option>
+                      <option value="HR">Croatia</option>
+                      <option value="SI">Slovenia</option>
+                      <option value="SK">Slovakia</option>
+                      <option value="LT">Lithuania</option>
+                      <option value="LV">Latvia</option>
+                      <option value="EE">Estonia</option>
+
                       <option value="GB">United Kingdom</option>
                       <option value="US">United States</option>
                       <option value="CA">Canada</option>
+                      <option value="IN">India</option>
+                      <option value="AU">Australia</option>
+                      <option value="NZ">New Zealand</option>
                     </select>
                   </div>
 
                   <div className={fieldWrapClass}>
                     <p className={labelClass}>Street Address *</p>
+
                     <input
                       name="address1"
                       type="text"
@@ -289,6 +324,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
                   <div className={fieldWrapClass}>
                     <p className={labelClass}>Apartment, Suite, Floor</p>
+
                     <input
                       name="address2"
                       type="text"
@@ -302,6 +338,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                   <div className="grid grid-cols-3 gap-4">
                     <div className={`col-span-3 md:col-span-1 ${fieldWrapClass}`}>
                       <p className={labelClass}>City *</p>
+
                       <input
                         name="city"
                         type="text"
@@ -315,6 +352,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
                     <div className={`col-span-3 md:col-span-1 ${fieldWrapClass}`}>
                       <p className={labelClass}>State / Region *</p>
+
                       <input
                         name="region"
                         type="text"
@@ -328,6 +366,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
                     <div className={`col-span-3 md:col-span-1 ${fieldWrapClass}`}>
                       <p className={labelClass}>ZIP / Postal Code *</p>
+
                       <input
                         name="zip"
                         type="text"
@@ -345,6 +384,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     className="w-full py-5 bg-brand-black text-white uppercase tracking-[0.2em] font-bold text-[10px] flex items-center justify-center gap-3 group mt-8 md:mt-12"
                   >
                     Continue to Payment
+
                     <ArrowRight
                       size={14}
                       className="group-hover:translate-x-1 transition-transform"
@@ -376,6 +416,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                       onChange={(event) => setTermsAccepted(event.target.checked)}
                       className="mt-1 accent-brand-black cursor-pointer"
                     />
+
                     <label
                       htmlFor="terms"
                       className="text-[9px] uppercase tracking-widest font-bold opacity-40 cursor-pointer select-none"
@@ -395,6 +436,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     <PayPalCheckoutButton
                       totalPrice={totalPrice}
                       shippingDetails={shippingDetails}
+                      cartItems={cartItems}
                       onSuccess={handlePaymentSuccess}
                     />
                   ) : (
@@ -430,6 +472,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
                   <div className="flex items-center gap-4 text-[10px] uppercase tracking-widest font-bold opacity-30">
                     <Truck size={14} />
+
                     <span>Reference: TFW-2026-88A</span>
                   </div>
 
