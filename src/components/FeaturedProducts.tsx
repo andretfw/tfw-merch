@@ -3,12 +3,20 @@ import { ShoppingBag } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useCart } from "../context/CartContext";
 
+interface ProductImage {
+  src: string;
+  variant_ids?: number[];
+  position?: string;
+  is_default?: boolean;
+}
+
 interface PrintifyVariant {
   id: number;
   title: string;
   price: number;
   is_enabled: boolean;
   image?: string;
+  images?: ProductImage[];
   provider?: "printify" | "printful";
   printifyVariantId?: number | string;
   printfulVariantId?: number | string;
@@ -21,6 +29,7 @@ interface PrintifyProduct {
   title: string;
   description: string;
   image: string;
+  images?: ProductImage[];
   price: number;
   variants: PrintifyVariant[];
 }
@@ -96,6 +105,46 @@ function getVariantInfo(variantTitle: string) {
   };
 }
 
+function uniqueImages(images: ProductImage[]) {
+  const seen = new Set<string>();
+
+  return images
+    .filter((image) => image?.src)
+    .filter((image) => {
+      if (seen.has(image.src)) return false;
+      seen.add(image.src);
+      return true;
+    });
+}
+
+function getGalleryImages(product: PrintifyProduct, selectedVariant?: PrintifyVariant) {
+  const variantImages = selectedVariant?.images || [];
+  const productImages = product.images || [];
+
+  return uniqueImages([
+    ...variantImages,
+    ...(selectedVariant?.image
+      ? [
+          {
+            src: selectedVariant.image,
+            position: "front",
+            is_default: true,
+          },
+        ]
+      : []),
+    ...(product.image
+      ? [
+          {
+            src: product.image,
+            position: "front",
+            is_default: true,
+          },
+        ]
+      : []),
+    ...productImages,
+  ]);
+}
+
 export default function FeaturedProducts({
   filterCategory,
   onClearFilter,
@@ -107,6 +156,7 @@ export default function FeaturedProducts({
 }) {
   const [products, setProducts] = useState<PrintifyProduct[]>([]);
   const [selectedVariants, setSelectedVariants] = useState<Record<string, number>>({});
+  const [selectedImages, setSelectedImages] = useState<Record<string, string>>({});
   const [selectedSeries, setSelectedSeries] = useState<string | null>(null);
   const [selectedGender, setSelectedGender] = useState("All");
   const [loading, setLoading] = useState(true);
@@ -143,15 +193,27 @@ export default function FeaturedProducts({
         const loadedProducts: PrintifyProduct[] = data.products || [];
         setProducts(loadedProducts);
 
-        const defaults: Record<string, number> = {};
+        const defaultVariants: Record<string, number> = {};
+        const defaultImages: Record<string, string> = {};
 
         loadedProducts.forEach((product) => {
           if (product.variants?.length > 0) {
-            defaults[product.id] = product.variants[0].id;
+            const firstVariant = product.variants[0];
+
+            defaultVariants[product.id] = firstVariant.id;
+            defaultImages[product.id] =
+              firstVariant.image ||
+              firstVariant.images?.[0]?.src ||
+              product.image ||
+              product.images?.[0]?.src ||
+              "";
+          } else {
+            defaultImages[product.id] = product.image || product.images?.[0]?.src || "";
           }
         });
 
-        setSelectedVariants(defaults);
+        setSelectedVariants(defaultVariants);
+        setSelectedImages(defaultImages);
       } catch (err) {
         setApiError(err instanceof Error ? err.message : "Something went wrong.");
       } finally {
@@ -194,6 +256,29 @@ export default function FeaturedProducts({
     return productsWithMeta.filter((product) => product.seriesSlug === slug).length;
   };
 
+  const handleVariantChange = (product: any, variantId: number) => {
+    const selectedVariant =
+      product.variants.find((variant: PrintifyVariant) => variant.id === variantId) ||
+      product.variants[0];
+
+    const galleryImages = getGalleryImages(product, selectedVariant);
+
+    setSelectedVariants((prev) => ({
+      ...prev,
+      [product.id]: variantId,
+    }));
+
+    setSelectedImages((prev) => ({
+      ...prev,
+      [product.id]:
+        selectedVariant?.image ||
+        selectedVariant?.images?.[0]?.src ||
+        galleryImages[0]?.src ||
+        product.image ||
+        "",
+    }));
+  };
+
   const handleAddToCart = (product: any) => {
     const selectedVariantId = selectedVariants[product.id];
 
@@ -209,13 +294,19 @@ export default function FeaturedProducts({
 
     const { size, color } = getVariantInfo(selectedVariant.title);
 
+    const cartImage =
+      selectedImages[product.id] ||
+      selectedVariant.image ||
+      selectedVariant.images?.[0]?.src ||
+      product.image;
+
     addToCart(
       {
         id: `${product.id}-${selectedVariant.id}`,
         name: product.displayName,
         description: cleanDescription(product.description).slice(0, 160),
         price: selectedVariant.price,
-        image: selectedVariant?.image || product.image,
+        image: cartImage,
         category: product.seriesName,
         featured: true,
 
@@ -323,7 +414,16 @@ export default function FeaturedProducts({
                     (variant) => variant.id === selectedVariantId
                   ) || product.variants[0];
 
-                const selectedImage = selectedVariant?.image || product.image;
+                const galleryImages = getGalleryImages(product, selectedVariant);
+
+                const selectedImage =
+                  selectedImages[product.id] ||
+                  selectedVariant?.image ||
+                  selectedVariant?.images?.[0]?.src ||
+                  product.image ||
+                  galleryImages[0]?.src ||
+                  "";
+
                 const description = cleanDescription(product.description);
 
                 return (
@@ -335,7 +435,7 @@ export default function FeaturedProducts({
                     viewport={{ once: true }}
                     className="group"
                   >
-                    <div className="bg-brand-cream aspect-[4/5] overflow-hidden mb-8 border border-brand-black/5">
+                    <div className="bg-brand-cream aspect-[4/5] overflow-hidden mb-3 border border-brand-black/5">
                       {selectedImage ? (
                         <img
                           src={selectedImage}
@@ -350,6 +450,35 @@ export default function FeaturedProducts({
                         </div>
                       )}
                     </div>
+
+                    {galleryImages.length > 1 && (
+                      <div className="grid grid-cols-5 gap-2 mb-8">
+                        {galleryImages.slice(0, 10).map((image, imageIndex) => (
+                          <button
+                            key={`${product.id}-${image.src}-${imageIndex}`}
+                            type="button"
+                            onClick={() =>
+                              setSelectedImages((prev) => ({
+                                ...prev,
+                                [product.id]: image.src,
+                              }))
+                            }
+                            className={`aspect-square overflow-hidden border transition-all ${
+                              selectedImage === image.src
+                                ? "border-brand-black opacity-100"
+                                : "border-brand-black/10 opacity-55 hover:opacity-100"
+                            }`}
+                            aria-label={`View image ${imageIndex + 1} for ${product.displayName}`}
+                          >
+                            <img
+                              src={image.src}
+                              alt={`${product.displayName} view ${imageIndex + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     <div className="space-y-4">
                       <div className="flex items-start justify-between gap-6">
@@ -383,10 +512,7 @@ export default function FeaturedProducts({
                           <select
                             value={selectedVariantId || ""}
                             onChange={(event) =>
-                              setSelectedVariants((prev) => ({
-                                ...prev,
-                                [product.id]: Number(event.target.value),
-                              }))
+                              handleVariantChange(product, Number(event.target.value))
                             }
                             className="w-full bg-transparent border border-brand-black/10 px-4 py-3 text-xs uppercase tracking-widest focus:outline-none"
                           >
