@@ -46,6 +46,15 @@ function cleanBrandDescription(description) {
   return cleaned;
 }
 
+function normalizeImageUrl(src) {
+  if (!src) return "";
+
+  return src
+    .replace(/(_thumbnail|thumbnail|thumb|small)/gi, "")
+    .split("?")[0]
+    .trim();
+}
+
 function uniqueImages(images) {
   const seen = new Set();
 
@@ -53,8 +62,11 @@ function uniqueImages(images) {
     .filter(Boolean)
     .filter((image) => image.src)
     .filter((image) => {
-      if (seen.has(image.src)) return false;
-      seen.add(image.src);
+      const key = normalizeImageUrl(image.src);
+
+      if (seen.has(key)) return false;
+
+      seen.add(key);
       return true;
     });
 }
@@ -67,6 +79,12 @@ function sortImages(images) {
     if (a.position !== "front" && b.position === "front") return 1;
     return 0;
   });
+}
+
+function getBestPrintfulFileImage(file) {
+  if (!file) return "";
+
+  return file.preview_url || file.url || file.thumbnail_url || "";
 }
 
 async function getPrintifyProducts() {
@@ -111,7 +129,6 @@ async function getPrintifyProducts() {
         );
 
         const detailData = await detailResponse.json();
-
         const product = detailResponse.ok ? detailData : listProduct;
 
         const enabledVariants = (product.variants || []).filter(
@@ -196,20 +213,23 @@ async function getPrintifyProducts() {
 
 function getPrintfulVariantImages(variant, fallbackImage) {
   const fileImages = (variant.files || [])
-    .flatMap((file) => [
-      file.preview_url,
-      file.thumbnail_url,
-      file.url,
-    ])
-    .filter(Boolean)
-    .map((src, index) => ({
-      src,
-      variant_ids: [],
-      position: index === 0 ? "front" : "",
-      is_default: index === 0,
-    }));
+    .map((file, index) => {
+      const src = getBestPrintfulFileImage(file);
 
-  if (fileImages.length > 0) return uniqueImages(fileImages);
+      if (!src) return null;
+
+      return {
+        src,
+        variant_ids: [],
+        position: index === 0 ? "front" : "",
+        is_default: index === 0,
+      };
+    })
+    .filter(Boolean);
+
+  const cleanImages = uniqueImages(fileImages);
+
+  if (cleanImages.length > 0) return cleanImages;
 
   if (fallbackImage) {
     return [
@@ -267,8 +287,7 @@ async function getPrintfulProducts() {
       const fallbackImage =
         syncProduct?.thumbnail_url ||
         product.thumbnail_url ||
-        firstVariant?.files?.[0]?.preview_url ||
-        firstVariant?.files?.[0]?.thumbnail_url ||
+        getBestPrintfulFileImage(firstVariant?.files?.[0]) ||
         "";
 
       const price = Number(firstVariant?.retail_price || 0);
@@ -294,13 +313,15 @@ async function getPrintfulProducts() {
         });
 
       const allImages = uniqueImages([
-        {
-          src: fallbackImage,
-          variant_ids: [],
-          position: "front",
-          is_default: true,
-        },
         ...variantData.flatMap((variant) => variant.images || []),
+        fallbackImage
+          ? {
+              src: fallbackImage,
+              variant_ids: [],
+              position: "front",
+              is_default: true,
+            }
+          : null,
       ]);
 
       return {
