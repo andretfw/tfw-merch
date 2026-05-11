@@ -23,6 +23,28 @@ function cleanPrintfulVariantTitle(productName, variantName) {
   );
 }
 
+function cleanBrandDescription(description) {
+  const cleaned = (description || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleaned) {
+    return "A limited TFW wearable art piece, designed to be seen.";
+  }
+
+  // Safety: never show supplier names in product copy.
+  if (
+    cleaned.toLowerCase().includes("printful") ||
+    cleaned.toLowerCase().includes("printify") ||
+    cleaned.toLowerCase().includes("fulfilled")
+  ) {
+    return "A limited TFW wearable art piece, designed to be seen.";
+  }
+
+  return cleaned;
+}
+
 async function getPrintifyProducts() {
   const token = process.env.PRINTIFY_API_TOKEN;
   const shopId = process.env.PRINTIFY_SHOP_ID;
@@ -54,19 +76,49 @@ async function getPrintifyProducts() {
 
     const firstVariant = enabledVariants[0] || product.variants?.[0];
 
+    const images = (product.images || [])
+      .map((image) => ({
+        src: image.src || image.src_url || image.preview_url || "",
+        variant_ids: image.variant_ids || [],
+        position: image.position || "",
+        is_default: image.is_default || false,
+      }))
+      .filter((image) => image.src);
+
+    function getImageForVariant(variantId) {
+      const numericVariantId = Number(variantId);
+
+      const frontImage = images.find(
+        (image) =>
+          image.variant_ids?.map(Number).includes(numericVariantId) &&
+          image.position === "front"
+      );
+
+      const anyVariantImage = images.find((image) =>
+        image.variant_ids?.map(Number).includes(numericVariantId)
+      );
+
+      const defaultImage = images.find((image) => image.is_default);
+
+      return (
+        frontImage?.src ||
+        anyVariantImage?.src ||
+        defaultImage?.src ||
+        images[0]?.src ||
+        ""
+      );
+    }
+
     return {
       id: `printify-${product.id}`,
       provider: "printify",
       originalProductId: product.id,
       title: product.title,
-      description: product.description || "",
-
-      image:
-        product.images?.[0]?.src ||
-        product.images?.[0]?.src_url ||
-        product.images?.[0]?.preview_url ||
-        "",
-
+      description: cleanBrandDescription(product.description),
+      image: firstVariant
+        ? getImageForVariant(firstVariant.id)
+        : images[0]?.src || "",
+      images,
       price: firstVariant ? firstVariant.price / 100 : 0,
       variants: enabledVariants.map((variant) => ({
         id: variant.id,
@@ -75,6 +127,7 @@ async function getPrintifyProducts() {
         is_enabled: variant.is_enabled,
         provider: "printify",
         printifyVariantId: variant.id,
+        image: getImageForVariant(variant.id),
       })),
     };
   });
@@ -133,22 +186,30 @@ async function getPrintfulProducts() {
         provider: "printful",
         originalProductId: product.id,
         title: syncProduct?.name || product.name,
-        description: "Limited wearable art piece fulfilled through Printful.",
+        description: cleanBrandDescription(syncProduct?.description),
         image,
         price,
         variants: syncVariants
           .filter((variant) => variant.synced !== false)
-          .map((variant) => ({
-            id: variant.id,
-            title: cleanPrintfulVariantTitle(
-              syncProduct?.name || product.name,
-              variant.name
-            ),
-            price: Number(variant.retail_price || price || 0),
-            is_enabled: variant.synced !== false,
-            provider: "printful",
-            printfulVariantId: variant.id,
-          })),
+          .map((variant) => {
+            const variantImage =
+              variant.files?.[0]?.preview_url ||
+              variant.files?.[0]?.thumbnail_url ||
+              image;
+
+            return {
+              id: variant.id,
+              title: cleanPrintfulVariantTitle(
+                syncProduct?.name || product.name,
+                variant.name
+              ),
+              price: Number(variant.retail_price || price || 0),
+              is_enabled: variant.synced !== false,
+              provider: "printful",
+              printfulVariantId: variant.id,
+              image: variantImage,
+            };
+          }),
       };
     })
   );
