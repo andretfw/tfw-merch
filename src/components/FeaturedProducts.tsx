@@ -8,6 +8,7 @@ interface PrintifyVariant {
   title: string;
   price: number;
   is_enabled: boolean;
+  image?: string;
   provider?: "printify" | "printful";
   printifyVariantId?: number | string;
   printfulVariantId?: number | string;
@@ -214,7 +215,7 @@ export default function FeaturedProducts({
         name: product.displayName,
         description: cleanDescription(product.description).slice(0, 160),
         price: selectedVariant.price,
-        image: product.image,
+        image: selectedVariant?.image || product.image,
         category: product.seriesName,
         featured: true,
 
@@ -322,6 +323,7 @@ export default function FeaturedProducts({
                     (variant) => variant.id === selectedVariantId
                   ) || product.variants[0];
 
+                const selectedImage = selectedVariant?.image || product.image;
                 const description = cleanDescription(product.description);
 
                 return (
@@ -334,9 +336,9 @@ export default function FeaturedProducts({
                     className="group"
                   >
                     <div className="bg-brand-cream aspect-[4/5] overflow-hidden mb-8 border border-brand-black/5">
-                      {product.image ? (
+                      {selectedImage ? (
                         <img
-                          src={product.image}
+                          src={selectedImage}
                           alt={product.displayName}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
