@@ -15,10 +15,12 @@ function getPrintfulHeaders() {
 function cleanVariantTitle(productName, variantName) {
   if (!variantName) return "Default";
 
-  return variantName
-    .replace(productName, "")
-    .replace(/^[-–—|/ ]+/, "")
-    .trim() || variantName;
+  return (
+    variantName
+      .replace(productName, "")
+      .replace(/^[-–—|/ ]+/, "")
+      .trim() || variantName
+  );
 }
 
 export async function handler() {
@@ -86,20 +88,38 @@ export async function handler() {
         return {
           id: `printful-${product.id}`,
           provider: "printful",
+          originalProductId: product.id,
           title: syncProduct?.name || product.name,
-          description: "Limited wearable art piece fulfilled through Printful.",
+
+          // Brand copy only. No Printful/Printify visible on the website.
+          description:
+            syncProduct?.description ||
+            "A limited TFW wearable art piece, designed to be seen.",
+
           image,
           price,
+
           variants: syncVariants
             .filter((variant) => variant.synced !== false)
-            .map((variant) => ({
-              id: variant.id,
-              title: cleanVariantTitle(syncProduct?.name || product.name, variant.name),
-              price: Number(variant.retail_price || price || 0),
-              is_enabled: variant.synced !== false,
-              provider: "printful",
-              printfulVariantId: variant.id,
-            })),
+            .map((variant) => {
+              const variantImage =
+                variant.files?.[0]?.preview_url ||
+                variant.files?.[0]?.thumbnail_url ||
+                image;
+
+              return {
+                id: variant.id,
+                title: cleanVariantTitle(
+                  syncProduct?.name || product.name,
+                  variant.name
+                ),
+                price: Number(variant.retail_price || price || 0),
+                is_enabled: variant.synced !== false,
+                provider: "printful",
+                printfulVariantId: variant.id,
+                image: variantImage,
+              };
+            }),
         };
       })
     );
@@ -110,7 +130,7 @@ export async function handler() {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json",
-        "Cache-Control": "no-store",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
       },
       body: JSON.stringify({ products }),
     };
