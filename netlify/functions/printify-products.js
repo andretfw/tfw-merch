@@ -33,16 +33,40 @@ function cleanBrandDescription(description) {
     return "A limited TFW wearable art piece, designed to be seen.";
   }
 
-  // Safety: never show supplier names in product copy.
+  const lower = cleaned.toLowerCase();
+
   if (
-    cleaned.toLowerCase().includes("printful") ||
-    cleaned.toLowerCase().includes("printify") ||
-    cleaned.toLowerCase().includes("fulfilled")
+    lower.includes("printful") ||
+    lower.includes("printify") ||
+    lower.includes("fulfilled")
   ) {
     return "A limited TFW wearable art piece, designed to be seen.";
   }
 
   return cleaned;
+}
+
+function uniqueImages(images) {
+  const seen = new Set();
+
+  return images
+    .filter(Boolean)
+    .filter((image) => image.src)
+    .filter((image) => {
+      if (seen.has(image.src)) return false;
+      seen.add(image.src);
+      return true;
+    });
+}
+
+function sortImages(images) {
+  return [...images].sort((a, b) => {
+    if (a.is_default && !b.is_default) return -1;
+    if (!a.is_default && b.is_default) return 1;
+    if (a.position === "front" && b.position !== "front") return -1;
+    if (a.position !== "front" && b.position === "front") return 1;
+    return 0;
+  });
 }
 
 async function getPrintifyProducts() {
@@ -51,7 +75,7 @@ async function getPrintifyProducts() {
 
   if (!token || !shopId) return [];
 
-  const response = await fetch(
+  const listResponse = await fetch(
     `https://api.printify.com/v1/shops/${shopId}/products.json`,
     {
       method: "GET",
@@ -63,74 +87,142 @@ async function getPrintifyProducts() {
     }
   );
 
-  const data = await response.json();
+  const listData = await listResponse.json();
 
-  if (!response.ok) {
-    throw new Error(data?.message || "Printify API error");
+  if (!listResponse.ok) {
+    throw new Error(listData?.message || "Printify API error");
   }
 
-  return (data.data || []).map((product) => {
-    const enabledVariants = (product.variants || []).filter(
-      (variant) => variant.is_enabled
-    );
+  const rawProducts = listData.data || [];
 
-    const firstVariant = enabledVariants[0] || product.variants?.[0];
+  const productDetails = await Promise.all(
+    rawProducts.map(async (listProduct) => {
+      try {
+        const detailResponse = await fetch(
+          `https://api.printify.com/v1/shops/${shopId}/products/${listProduct.id}.json`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json;charset=utf-8",
+              "User-Agent": "TFW Wearable Art Website",
+            },
+          }
+        );
 
-    const images = (product.images || [])
-      .map((image) => ({
-        src: image.src || image.src_url || image.preview_url || "",
-        variant_ids: image.variant_ids || [],
-        position: image.position || "",
-        is_default: image.is_default || false,
-      }))
-      .filter((image) => image.src);
+        const detailData = await detailResponse.json();
 
-    function getImageForVariant(variantId) {
-      const numericVariantId = Number(variantId);
+        const product = detailResponse.ok ? detailData : listProduct;
 
-      const frontImage = images.find(
-        (image) =>
-          image.variant_ids?.map(Number).includes(numericVariantId) &&
-          image.position === "front"
-      );
+        const enabledVariants = (product.variants || []).filter(
+          (variant) => variant.is_enabled
+        );
 
-      const anyVariantImage = images.find((image) =>
-        image.variant_ids?.map(Number).includes(numericVariantId)
-      );
+        const firstVariant = enabledVariants[0] || product.variants?.[0];
 
-      const defaultImage = images.find((image) => image.is_default);
+        const allImages = sortImages(
+          uniqueImages(
+            (product.images || []).map((image) => ({
+              src: image.src || image.src_url || image.preview_url || "",
+              variant_ids: image.variant_ids || [],
+              position: image.position || "",
+              is_default: image.is_default || false,
+            }))
+          )
+        );
 
-      return (
-        frontImage?.src ||
-        anyVariantImage?.src ||
-        defaultImage?.src ||
-        images[0]?.src ||
-        ""
-      );
-    }
+        function getImagesForVariant(variantId) {
+          const numericVariantId = Number(variantId);
 
-    return {
-      id: `printify-${product.id}`,
-      provider: "printify",
-      originalProductId: product.id,
-      title: product.title,
-      description: cleanBrandDescription(product.description),
-      image: firstVariant
-        ? getImageForVariant(firstVariant.id)
-        : images[0]?.src || "",
-      images,
-      price: firstVariant ? firstVariant.price / 100 : 0,
-      variants: enabledVariants.map((variant) => ({
-        id: variant.id,
-        title: variant.title,
-        price: variant.price / 100,
-        is_enabled: variant.is_enabled,
-        provider: "printify",
-        printifyVariantId: variant.id,
-        image: getImageForVariant(variant.id),
-      })),
-    };
-  });
+          const matchingImages = allImages.filter((image) =>
+            (image.variant_ids || []).map(Number).includes(numericVariantId)
+          );
+
+          return matchingImages.length > 0 ? matchingImages : allImages;
+        }
+
+        function getMainImageForVariant(variantId) {
+          const variantImages = getImagesForVariant(variantId);
+
+          const frontImage = variantImages.find(
+            (image) => image.position === "front"
+          );
+
+          const defaultImage = variantImages.find((image) => image.is_default);
+
+          return (
+            frontImage?.src ||
+            defaultImage?.src ||
+            variantImages[0]?.src ||
+            allImages[0]?.src ||
+            ""
+          );
+        }
+
+        return {
+          id: `printify-${product.id}`,
+          provider: "printify",
+          originalProductId: product.id,
+          title: product.title,
+          description: cleanBrandDescription(product.description),
+          image: firstVariant
+            ? getMainImageForVariant(firstVariant.id)
+            : allImages[0]?.src || "",
+          images: allImages,
+          price: firstVariant ? firstVariant.price / 100 : 0,
+          variants: enabledVariants.map((variant) => {
+            const variantImages = getImagesForVariant(variant.id);
+
+            return {
+              id: variant.id,
+              title: variant.title,
+              price: variant.price / 100,
+              is_enabled: variant.is_enabled,
+              provider: "printify",
+              printifyVariantId: variant.id,
+              image: getMainImageForVariant(variant.id),
+              images: variantImages,
+            };
+          }),
+        };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return productDetails.filter(Boolean);
+}
+
+function getPrintfulVariantImages(variant, fallbackImage) {
+  const fileImages = (variant.files || [])
+    .flatMap((file) => [
+      file.preview_url,
+      file.thumbnail_url,
+      file.url,
+    ])
+    .filter(Boolean)
+    .map((src, index) => ({
+      src,
+      variant_ids: [],
+      position: index === 0 ? "front" : "",
+      is_default: index === 0,
+    }));
+
+  if (fileImages.length > 0) return uniqueImages(fileImages);
+
+  if (fallbackImage) {
+    return [
+      {
+        src: fallbackImage,
+        variant_ids: [],
+        position: "front",
+        is_default: true,
+      },
+    ];
+  }
+
+  return [];
 }
 
 async function getPrintfulProducts() {
@@ -172,7 +264,7 @@ async function getPrintfulProducts() {
 
       const firstVariant = syncVariants[0];
 
-      const image =
+      const fallbackImage =
         syncProduct?.thumbnail_url ||
         product.thumbnail_url ||
         firstVariant?.files?.[0]?.preview_url ||
@@ -181,35 +273,46 @@ async function getPrintfulProducts() {
 
       const price = Number(firstVariant?.retail_price || 0);
 
+      const variantData = syncVariants
+        .filter((variant) => variant.synced !== false)
+        .map((variant) => {
+          const variantImages = getPrintfulVariantImages(variant, fallbackImage);
+
+          return {
+            id: variant.id,
+            title: cleanPrintfulVariantTitle(
+              syncProduct?.name || product.name,
+              variant.name
+            ),
+            price: Number(variant.retail_price || price || 0),
+            is_enabled: variant.synced !== false,
+            provider: "printful",
+            printfulVariantId: variant.id,
+            image: variantImages[0]?.src || fallbackImage,
+            images: variantImages,
+          };
+        });
+
+      const allImages = uniqueImages([
+        {
+          src: fallbackImage,
+          variant_ids: [],
+          position: "front",
+          is_default: true,
+        },
+        ...variantData.flatMap((variant) => variant.images || []),
+      ]);
+
       return {
         id: `printful-${product.id}`,
         provider: "printful",
         originalProductId: product.id,
         title: syncProduct?.name || product.name,
         description: cleanBrandDescription(syncProduct?.description),
-        image,
+        image: allImages[0]?.src || fallbackImage,
+        images: allImages,
         price,
-        variants: syncVariants
-          .filter((variant) => variant.synced !== false)
-          .map((variant) => {
-            const variantImage =
-              variant.files?.[0]?.preview_url ||
-              variant.files?.[0]?.thumbnail_url ||
-              image;
-
-            return {
-              id: variant.id,
-              title: cleanPrintfulVariantTitle(
-                syncProduct?.name || product.name,
-                variant.name
-              ),
-              price: Number(variant.retail_price || price || 0),
-              is_enabled: variant.synced !== false,
-              provider: "printful",
-              printfulVariantId: variant.id,
-              image: variantImage,
-            };
-          }),
+        variants: variantData,
       };
     })
   );
