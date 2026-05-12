@@ -148,6 +148,50 @@ function getGalleryImages(product: PrintifyProduct, selectedVariant?: PrintifyVa
   ]);
 }
 
+function looksLikeModelImage(image: ProductImage) {
+  const src = image.src.toLowerCase();
+  const position = (image.position || "").toLowerCase();
+
+  return (
+    src.includes("model") ||
+    src.includes("lifestyle") ||
+    src.includes("person") ||
+    src.includes("wear") ||
+    src.includes("mockup") ||
+    position.includes("model") ||
+    position.includes("lifestyle")
+  );
+}
+
+function getPreferredMainImage(galleryImages: ProductImage[]) {
+  if (galleryImages.length === 0) return "";
+
+  const modelImage = galleryImages.find(looksLikeModelImage);
+
+  if (modelImage?.src) {
+    return modelImage.src;
+  }
+
+  // Fallback for your current gallery order:
+  // logo/art often appear first, model often appears around the 3rd image.
+  if (galleryImages.length >= 3) {
+    return galleryImages[2].src;
+  }
+
+  return galleryImages[0].src;
+}
+
+function orderGalleryImages(galleryImages: ProductImage[]) {
+  const preferredSrc = getPreferredMainImage(galleryImages);
+
+  if (!preferredSrc) return galleryImages;
+
+  const preferred = galleryImages.find((image) => image.src === preferredSrc);
+  const rest = galleryImages.filter((image) => image.src !== preferredSrc);
+
+  return preferred ? [preferred, ...rest] : galleryImages;
+}
+
 export default function FeaturedProducts({
   filterCategory,
   onClearFilter,
@@ -202,16 +246,26 @@ export default function FeaturedProducts({
         loadedProducts.forEach((product) => {
           if (product.variants?.length > 0) {
             const firstVariant = product.variants[0];
+            const galleryImages = getGalleryImages(product, firstVariant);
+            const orderedGalleryImages = orderGalleryImages(galleryImages);
 
             defaultVariants[product.id] = firstVariant.id;
             defaultImages[product.id] =
+              getPreferredMainImage(orderedGalleryImages) ||
               firstVariant.image ||
               firstVariant.images?.[0]?.src ||
               product.image ||
               product.images?.[0]?.src ||
               "";
           } else {
-            defaultImages[product.id] = product.image || product.images?.[0]?.src || "";
+            const galleryImages = getGalleryImages(product);
+            const orderedGalleryImages = orderGalleryImages(galleryImages);
+
+            defaultImages[product.id] =
+              getPreferredMainImage(orderedGalleryImages) ||
+              product.image ||
+              product.images?.[0]?.src ||
+              "";
           }
         });
 
@@ -265,6 +319,7 @@ export default function FeaturedProducts({
       product.variants[0];
 
     const galleryImages = getGalleryImages(product, selectedVariant);
+    const orderedGalleryImages = orderGalleryImages(galleryImages);
 
     setSelectedVariants((prev) => ({
       ...prev,
@@ -274,9 +329,9 @@ export default function FeaturedProducts({
     setSelectedImages((prev) => ({
       ...prev,
       [product.id]:
+        getPreferredMainImage(orderedGalleryImages) ||
         selectedVariant?.image ||
         selectedVariant?.images?.[0]?.src ||
-        galleryImages[0]?.src ||
         product.image ||
         "",
     }));
@@ -417,10 +472,13 @@ export default function FeaturedProducts({
                     (variant) => variant.id === selectedVariantId
                   ) || product.variants[0];
 
-                const galleryImages = getGalleryImages(product, selectedVariant);
+                const galleryImages = orderGalleryImages(
+                  getGalleryImages(product, selectedVariant)
+                );
 
                 const selectedImage =
                   selectedImages[product.id] ||
+                  getPreferredMainImage(galleryImages) ||
                   selectedVariant?.image ||
                   selectedVariant?.images?.[0]?.src ||
                   product.image ||
@@ -438,15 +496,15 @@ export default function FeaturedProducts({
                     viewport={{ once: true }}
                     className="group"
                   >
-                    <div className="bg-brand-cream aspect-[4/5] overflow-hidden mb-3 border border-brand-black/5">
+                    <div className="bg-white aspect-[4/5] overflow-hidden mb-4 border border-brand-black/5 flex items-center justify-center p-2 md:p-3">
                       {selectedImage ? (
                         <img
                           src={selectedImage}
                           alt={product.displayName}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                          className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-700"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
+                        <div className="w-full h-full flex items-center justify-center bg-brand-cream">
                           <span className="text-[10px] uppercase tracking-[0.4em] font-bold opacity-20">
                             TFW
                           </span>
@@ -455,8 +513,8 @@ export default function FeaturedProducts({
                     </div>
 
                     {galleryImages.length > 1 && (
-                      <div className="grid grid-cols-5 gap-2 mb-8">
-                        {galleryImages.slice(0, 10).map((image, imageIndex) => (
+                      <div className="grid grid-cols-4 gap-2 mb-8">
+                        {galleryImages.slice(0, 8).map((image, imageIndex) => (
                           <button
                             key={`${product.id}-${image.src}-${imageIndex}`}
                             type="button"
@@ -466,7 +524,7 @@ export default function FeaturedProducts({
                                 [product.id]: image.src,
                               }))
                             }
-                            className={`aspect-square overflow-hidden border transition-all ${
+                            className={`aspect-square overflow-hidden border bg-white p-1 transition-all ${
                               selectedImage === image.src
                                 ? "border-brand-black opacity-100"
                                 : "border-brand-black/10 opacity-55 hover:opacity-100"
@@ -476,7 +534,7 @@ export default function FeaturedProducts({
                             <img
                               src={image.src}
                               alt={`${product.displayName} view ${imageIndex + 1}`}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-contain"
                             />
                           </button>
                         ))}
@@ -599,14 +657,14 @@ export default function FeaturedProducts({
                 viewport={{ once: true }}
                 className="group text-left bg-brand-cream/50 border border-brand-black/5 p-5 hover:bg-brand-cream transition-all duration-500"
               >
-                <div className="aspect-[4/5] bg-white overflow-hidden mb-8 border border-brand-black/5">
+                <div className="aspect-[4/5] bg-white overflow-hidden mb-8 border border-brand-black/5 flex items-center justify-center p-2">
                   <img
                     src={item.cover}
                     alt={item.name}
                     onError={(event) => {
                       event.currentTarget.style.display = "none";
                     }}
-                    className="w-full h-full object-cover grayscale-[0.15] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700"
+                    className="w-full h-full object-contain grayscale-[0.15] group-hover:grayscale-0 group-hover:scale-[1.02] transition-all duration-700"
                   />
                 </div>
 
