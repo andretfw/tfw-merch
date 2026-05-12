@@ -1,5 +1,11 @@
 import { motion } from "motion/react";
-import { ShoppingBag } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ShoppingBag,
+  X,
+  ZoomIn,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useCart } from "../context/CartContext";
 
@@ -32,6 +38,12 @@ interface PrintifyProduct {
   images?: ProductImage[];
   price: number;
   variants: PrintifyVariant[];
+}
+
+interface ZoomState {
+  images: ProductImage[];
+  index: number;
+  title: string;
 }
 
 const series = [
@@ -172,8 +184,6 @@ function getPreferredMainImage(galleryImages: ProductImage[]) {
     return modelImage.src;
   }
 
-  // Fallback for your current gallery order:
-  // logo/art often appear first, model often appears around the 3rd image.
   if (galleryImages.length >= 3) {
     return galleryImages[2].src;
   }
@@ -208,6 +218,7 @@ export default function FeaturedProducts({
   const [selectedGender, setSelectedGender] = useState("All");
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState("");
+  const [zoom, setZoom] = useState<ZoomState | null>(null);
 
   const { addToCart } = useCart();
 
@@ -281,6 +292,47 @@ export default function FeaturedProducts({
     loadProducts();
   }, []);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (!zoom) return;
+
+      if (event.key === "Escape") {
+        setZoom(null);
+      }
+
+      if (event.key === "ArrowRight") {
+        setZoom((current) => {
+          if (!current) return current;
+
+          return {
+            ...current,
+            index: (current.index + 1) % current.images.length,
+          };
+        });
+      }
+
+      if (event.key === "ArrowLeft") {
+        setZoom((current) => {
+          if (!current) return current;
+
+          return {
+            ...current,
+            index:
+              current.index === 0
+                ? current.images.length - 1
+                : current.index - 1,
+          };
+        });
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [zoom]);
+
   const productsWithMeta = useMemo(() => {
     return products.map((product) => {
       const parsed = parseProductTitle(product.title);
@@ -311,6 +363,19 @@ export default function FeaturedProducts({
 
   const getSeriesCount = (slug: string) => {
     return productsWithMeta.filter((product) => product.seriesSlug === slug).length;
+  };
+
+  const openZoom = (images: ProductImage[], selectedImage: string, title: string) => {
+    const orderedImages = orderGalleryImages(uniqueImages(images));
+    const selectedIndex = orderedImages.findIndex(
+      (image) => image.src === selectedImage
+    );
+
+    setZoom({
+      images: orderedImages,
+      index: selectedIndex >= 0 ? selectedIndex : 0,
+      title,
+    });
   };
 
   const handleVariantChange = (product: any, variantId: number) => {
@@ -397,297 +462,422 @@ export default function FeaturedProducts({
 
   const currentSeries = series.find((item) => item.slug === selectedSeries);
 
-  if (selectedSeries && currentSeries) {
-    return (
-      <section id="shop" className="py-32 px-8 md:px-12 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-16 text-center relative z-10">
+  const zoomModal = zoom ? (
+    <div className="fixed inset-0 z-[9999] bg-black/95 text-white">
+      <button
+        type="button"
+        onClick={() => setZoom(null)}
+        className="absolute top-5 right-5 z-20 h-11 w-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+        aria-label="Close image zoom"
+      >
+        <X size={22} />
+      </button>
+
+      <div className="h-full w-full flex flex-col">
+        <div className="px-6 pt-6 pr-20">
+          <p className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-bold">
+            Product view
+          </p>
+          <h3 className="mt-2 text-2xl md:text-4xl font-serif italic">
+            {zoom.title}
+          </h3>
+        </div>
+
+        <div className="relative flex-1 flex items-center justify-center px-4 md:px-20 py-6">
+          {zoom.images.length > 1 && (
             <button
               type="button"
-              onClick={() => {
-                setSelectedSeries(null);
-                setSelectedGender("All");
-              }}
-              className="mb-10 text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 hover:opacity-100 transition-opacity"
+              onClick={() =>
+                setZoom((current) => {
+                  if (!current) return current;
+
+                  return {
+                    ...current,
+                    index:
+                      current.index === 0
+                        ? current.images.length - 1
+                        : current.index - 1,
+                  };
+                })
+              }
+              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              aria-label="Previous product image"
             >
-              ← Back to Limited Series
+              <ChevronLeft size={26} />
             </button>
-
-            <motion.h2
-              key={currentSeries.name}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-4xl md:text-6xl font-serif italic mb-8"
-            >
-              {currentSeries.name}
-            </motion.h2>
-
-            <p className="text-brand-accent max-w-xl mx-auto opacity-70">
-              {currentSeries.line}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap justify-center gap-3 mb-16 relative z-10">
-            {genderFilters.map((gender) => (
-              <button
-                key={gender}
-                type="button"
-                onClick={() => setSelectedGender(gender)}
-                className={`px-6 py-3 text-[10px] uppercase tracking-[0.25em] font-bold border transition-all ${
-                  selectedGender === gender
-                    ? "bg-brand-black text-white border-brand-black"
-                    : "border-brand-black/10 text-brand-black/50 hover:border-brand-black hover:text-brand-black"
-                }`}
-              >
-                {gender}
-              </button>
-            ))}
-          </div>
-
-          {apiError && (
-            <div className="py-10 text-center">
-              <p className="text-sm text-red-600 max-w-xl mx-auto">{apiError}</p>
-            </div>
           )}
 
-          {!apiError && visibleProducts.length === 0 ? (
-            <div className="py-20 text-center">
-              <p className="font-serif italic text-2xl opacity-40">
-                No pieces in this selection yet.
-              </p>
+          <img
+            src={zoom.images[zoom.index]?.src}
+            alt={`${zoom.title} large view`}
+            className="max-h-[72vh] max-w-full object-contain"
+          />
 
-              <p className="mt-4 text-sm text-brand-accent opacity-50">
-                <span className="font-bold">
-                  {currentSeries.name} | Women | Product Name
-                </span>
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-12">
-              {visibleProducts.map((product, index) => {
-                const selectedVariantId = selectedVariants[product.id];
+          {zoom.images.length > 1 && (
+            <button
+              type="button"
+              onClick={() =>
+                setZoom((current) => {
+                  if (!current) return current;
 
-                const selectedVariant =
-                  product.variants.find(
-                    (variant) => variant.id === selectedVariantId
-                  ) || product.variants[0];
-
-                const galleryImages = orderGalleryImages(
-                  getGalleryImages(product, selectedVariant)
-                );
-
-                const selectedImage =
-                  selectedImages[product.id] ||
-                  getPreferredMainImage(galleryImages) ||
-                  selectedVariant?.image ||
-                  selectedVariant?.images?.[0]?.src ||
-                  product.image ||
-                  galleryImages[0]?.src ||
-                  "";
-
-                const description = cleanDescription(product.description);
-
-                return (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 18 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.08, duration: 0.7 }}
-                    viewport={{ once: true }}
-                    className="group"
-                  >
-                    <div className="bg-white aspect-[4/5] overflow-hidden mb-4 border border-brand-black/5 flex items-center justify-center p-2 md:p-3">
-                      {selectedImage ? (
-                        <img
-                          src={selectedImage}
-                          alt={product.displayName}
-                          className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-700"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-brand-cream">
-                          <span className="text-[10px] uppercase tracking-[0.4em] font-bold opacity-20">
-                            TFW
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {galleryImages.length > 1 && (
-                      <div className="grid grid-cols-4 gap-2 mb-8">
-                        {galleryImages.slice(0, 8).map((image, imageIndex) => (
-                          <button
-                            key={`${product.id}-${image.src}-${imageIndex}`}
-                            type="button"
-                            onClick={() =>
-                              setSelectedImages((prev) => ({
-                                ...prev,
-                                [product.id]: image.src,
-                              }))
-                            }
-                            className={`aspect-square overflow-hidden border bg-white p-1 transition-all ${
-                              selectedImage === image.src
-                                ? "border-brand-black opacity-100"
-                                : "border-brand-black/10 opacity-55 hover:opacity-100"
-                            }`}
-                            aria-label={`View image ${imageIndex + 1} for ${product.displayName}`}
-                          >
-                            <img
-                              src={image.src}
-                              alt={`${product.displayName} view ${imageIndex + 1}`}
-                              className="w-full h-full object-contain"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="space-y-4">
-                      <div className="flex items-start justify-between gap-6">
-                        <div>
-                          <p className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30 mb-3">
-                            {product.gender}
-                          </p>
-
-                          <h3 className="text-2xl font-serif italic leading-tight">
-                            {product.displayName}
-                          </h3>
-                        </div>
-
-                        <p className="text-lg font-serif whitespace-nowrap">
-                          €{selectedVariant?.price || product.price}
-                        </p>
-                      </div>
-
-                      {description && (
-                        <p className="text-sm text-brand-accent opacity-60 leading-relaxed">
-                          {description.slice(0, 130)}...
-                        </p>
-                      )}
-
-                      {product.variants.length > 0 && (
-                        <div className="pt-2">
-                          <label className="block text-[9px] uppercase tracking-[0.25em] font-bold opacity-30 mb-3">
-                            Size / Color
-                          </label>
-
-                          <select
-                            value={selectedVariantId || ""}
-                            onChange={(event) =>
-                              handleVariantChange(product, Number(event.target.value))
-                            }
-                            className="w-full bg-transparent border border-brand-black/10 px-4 py-3 text-xs uppercase tracking-widest focus:outline-none"
-                          >
-                            {product.variants.map((variant) => (
-                              <option key={variant.id} value={variant.id}>
-                                {variant.title} — €{variant.price}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 gap-3 pt-3">
-                        <button
-                          type="button"
-                          onClick={() => handleAddToCart(product)}
-                          className="w-full py-4 bg-brand-black text-white uppercase tracking-[0.2em] font-bold text-[10px] flex items-center justify-center gap-3 hover:bg-brand-berry transition-colors"
-                        >
-                          Add to Bag
-                          <ShoppingBag size={14} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleOrderNow(product)}
-                          className="w-full py-4 border border-brand-black/20 text-brand-black uppercase tracking-[0.2em] font-bold text-[10px] hover:border-brand-black transition-colors"
-                        >
-                          Order Now
-                        </button>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
+                  return {
+                    ...current,
+                    index: (current.index + 1) % current.images.length,
+                  };
+                })
+              }
+              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 h-12 w-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+              aria-label="Next product image"
+            >
+              <ChevronRight size={26} />
+            </button>
           )}
         </div>
-      </section>
+
+        {zoom.images.length > 1 && (
+          <div className="px-4 md:px-10 pb-6">
+            <div className="flex gap-3 overflow-x-auto justify-start md:justify-center">
+              {zoom.images.map((image, index) => (
+                <button
+                  key={`${image.src}-${index}`}
+                  type="button"
+                  onClick={() =>
+                    setZoom((current) =>
+                      current ? { ...current, index } : current
+                    )
+                  }
+                  className={`h-20 w-20 shrink-0 bg-white rounded-sm border p-1 transition-all ${
+                    zoom.index === index
+                      ? "border-white opacity-100"
+                      : "border-white/20 opacity-50 hover:opacity-100"
+                  }`}
+                  aria-label={`Open product image ${index + 1}`}
+                >
+                  <img
+                    src={image.src}
+                    alt={`${zoom.title} thumbnail ${index + 1}`}
+                    className="h-full w-full object-contain"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  ) : null;
+
+  if (selectedSeries && currentSeries) {
+    return (
+      <>
+        <section id="shop" className="py-32 px-8 md:px-12 bg-white overflow-hidden">
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-16 text-center relative z-10">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSeries(null);
+                  setSelectedGender("All");
+                }}
+                className="mb-10 text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 hover:opacity-100 transition-opacity"
+              >
+                ← Back to Limited Series
+              </button>
+
+              <motion.h2
+                key={currentSeries.name}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-4xl md:text-6xl font-serif italic mb-8"
+              >
+                {currentSeries.name}
+              </motion.h2>
+
+              <p className="text-brand-accent max-w-xl mx-auto opacity-70">
+                {currentSeries.line}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-3 mb-16 relative z-10">
+              {genderFilters.map((gender) => (
+                <button
+                  key={gender}
+                  type="button"
+                  onClick={() => setSelectedGender(gender)}
+                  className={`px-6 py-3 text-[10px] uppercase tracking-[0.25em] font-bold border transition-all ${
+                    selectedGender === gender
+                      ? "bg-brand-black text-white border-brand-black"
+                      : "border-brand-black/10 text-brand-black/50 hover:border-brand-black hover:text-brand-black"
+                  }`}
+                >
+                  {gender}
+                </button>
+              ))}
+            </div>
+
+            {apiError && (
+              <div className="py-10 text-center">
+                <p className="text-sm text-red-600 max-w-xl mx-auto">{apiError}</p>
+              </div>
+            )}
+
+            {!apiError && visibleProducts.length === 0 ? (
+              <div className="py-20 text-center">
+                <p className="font-serif italic text-2xl opacity-40">
+                  No pieces in this selection yet.
+                </p>
+
+                <p className="mt-4 text-sm text-brand-accent opacity-50">
+                  <span className="font-bold">
+                    {currentSeries.name} | Women | Product Name
+                  </span>
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-12">
+                {visibleProducts.map((product, index) => {
+                  const selectedVariantId = selectedVariants[product.id];
+
+                  const selectedVariant =
+                    product.variants.find(
+                      (variant) => variant.id === selectedVariantId
+                    ) || product.variants[0];
+
+                  const galleryImages = orderGalleryImages(
+                    getGalleryImages(product, selectedVariant)
+                  );
+
+                  const selectedImage =
+                    selectedImages[product.id] ||
+                    getPreferredMainImage(galleryImages) ||
+                    selectedVariant?.image ||
+                    selectedVariant?.images?.[0]?.src ||
+                    product.image ||
+                    galleryImages[0]?.src ||
+                    "";
+
+                  const description = cleanDescription(product.description);
+
+                  return (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 18 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.08, duration: 0.7 }}
+                      viewport={{ once: true }}
+                      className="group"
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openZoom(galleryImages, selectedImage, product.displayName)
+                        }
+                        className="relative w-full bg-white aspect-[4/5] overflow-hidden mb-4 border border-brand-black/5 flex items-center justify-center p-2 md:p-3 cursor-zoom-in"
+                        aria-label={`Zoom ${product.displayName}`}
+                      >
+                        {selectedImage ? (
+                          <img
+                            src={selectedImage}
+                            alt={product.displayName}
+                            className="w-full h-full object-contain group-hover:scale-[1.02] transition-transform duration-700"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-brand-cream">
+                            <span className="text-[10px] uppercase tracking-[0.4em] font-bold opacity-20">
+                              TFW
+                            </span>
+                          </div>
+                        )}
+
+                        <span className="absolute bottom-3 right-3 bg-white/90 text-brand-black text-[9px] uppercase tracking-[0.2em] font-bold px-3 py-2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <ZoomIn size={13} />
+                          Zoom
+                        </span>
+                      </button>
+
+                      {galleryImages.length > 1 && (
+                        <div className="grid grid-cols-4 gap-2 mb-8">
+                          {galleryImages.slice(0, 8).map((image, imageIndex) => (
+                            <button
+                              key={`${product.id}-${image.src}-${imageIndex}`}
+                              type="button"
+                              onClick={() =>
+                                setSelectedImages((prev) => ({
+                                  ...prev,
+                                  [product.id]: image.src,
+                                }))
+                              }
+                              className={`aspect-square overflow-hidden border bg-white p-1 transition-all ${
+                                selectedImage === image.src
+                                  ? "border-brand-black opacity-100"
+                                  : "border-brand-black/10 opacity-55 hover:opacity-100"
+                              }`}
+                              aria-label={`View image ${imageIndex + 1} for ${product.displayName}`}
+                            >
+                              <img
+                                src={image.src}
+                                alt={`${product.displayName} view ${imageIndex + 1}`}
+                                className="w-full h-full object-contain"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between gap-6">
+                          <div>
+                            <p className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30 mb-3">
+                              {product.gender}
+                            </p>
+
+                            <h3 className="text-2xl font-serif italic leading-tight">
+                              {product.displayName}
+                            </h3>
+                          </div>
+
+                          <p className="text-lg font-serif whitespace-nowrap">
+                            €{selectedVariant?.price || product.price}
+                          </p>
+                        </div>
+
+                        {description && (
+                          <p className="text-sm text-brand-accent opacity-60 leading-relaxed">
+                            {description.slice(0, 130)}...
+                          </p>
+                        )}
+
+                        {product.variants.length > 0 && (
+                          <div className="pt-2">
+                            <label className="block text-[9px] uppercase tracking-[0.25em] font-bold opacity-30 mb-3">
+                              Size / Color
+                            </label>
+
+                            <select
+                              value={selectedVariantId || ""}
+                              onChange={(event) =>
+                                handleVariantChange(product, Number(event.target.value))
+                              }
+                              className="w-full bg-transparent border border-brand-black/10 px-4 py-3 text-xs uppercase tracking-widest focus:outline-none"
+                            >
+                              {product.variants.map((variant) => (
+                                <option key={variant.id} value={variant.id}>
+                                  {variant.title} — €{variant.price}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-1 gap-3 pt-3">
+                          <button
+                            type="button"
+                            onClick={() => handleAddToCart(product)}
+                            className="w-full py-4 bg-brand-black text-white uppercase tracking-[0.2em] font-bold text-[10px] flex items-center justify-center gap-3 hover:bg-brand-berry transition-colors"
+                          >
+                            Add to Bag
+                            <ShoppingBag size={14} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleOrderNow(product)}
+                            className="w-full py-4 border border-brand-black/20 text-brand-black uppercase tracking-[0.2em] font-bold text-[10px] hover:border-brand-black transition-colors"
+                          >
+                            Order Now
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {zoomModal}
+      </>
     );
   }
 
   return (
-    <section id="shop" className="py-32 px-8 md:px-12 bg-white overflow-hidden">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-20 text-center">
-          <motion.h2
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-4xl md:text-6xl font-serif italic mb-8"
-          >
-            Limited Series
-          </motion.h2>
+    <>
+      <section id="shop" className="py-32 px-8 md:px-12 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-20 text-center">
+            <motion.h2
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-4xl md:text-6xl font-serif italic mb-8"
+            >
+              Limited Series
+            </motion.h2>
 
-          <p className="text-brand-accent max-w-xl mx-auto opacity-70">
-            Two moods. One universe. Wearable art for the colorful, the soft, the loud, and the beautifully complicated.
-          </p>
-
-          {loading && (
-            <p className="mt-8 text-[10px] uppercase tracking-[0.3em] font-bold opacity-30">
-              Loading pieces...
+            <p className="text-brand-accent max-w-xl mx-auto opacity-70">
+              Two moods. One universe. Wearable art for the colorful, the soft, the loud, and the beautifully complicated.
             </p>
-          )}
+
+            {loading && (
+              <p className="mt-8 text-[10px] uppercase tracking-[0.3em] font-bold opacity-30">
+                Loading pieces...
+              </p>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {series.map((item, index) => {
+              const count = getSeriesCount(item.slug);
+
+              return (
+                <motion.button
+                  key={item.slug}
+                  type="button"
+                  onClick={() => {
+                    setSelectedSeries(item.slug);
+                    setSelectedGender("All");
+                  }}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.08, duration: 0.7 }}
+                  viewport={{ once: true }}
+                  className="group text-left bg-brand-cream/50 border border-brand-black/5 p-5 hover:bg-brand-cream transition-all duration-500"
+                >
+                  <div className="aspect-[4/5] bg-white overflow-hidden mb-8 border border-brand-black/5 flex items-center justify-center p-2">
+                    <img
+                      src={item.cover}
+                      alt={item.name}
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                      }}
+                      className="w-full h-full object-contain grayscale-[0.15] group-hover:grayscale-0 group-hover:scale-[1.02] transition-all duration-700"
+                    />
+                  </div>
+
+                  <p className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30 mb-4">
+                    {count > 0 ? `${count} pieces` : "Limited drop"}
+                  </p>
+
+                  <h3 className="text-3xl font-serif italic mb-4 group-hover:text-brand-berry transition-colors">
+                    {item.name}
+                  </h3>
+
+                  <p className="text-sm text-brand-accent opacity-60 leading-relaxed">
+                    {item.line}
+                  </p>
+
+                  <p className="mt-8 text-[10px] uppercase tracking-[0.3em] font-bold">
+                    Enter Series →
+                  </p>
+                </motion.button>
+              );
+            })}
+          </div>
         </div>
+      </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {series.map((item, index) => {
-            const count = getSeriesCount(item.slug);
-
-            return (
-              <motion.button
-                key={item.slug}
-                type="button"
-                onClick={() => {
-                  setSelectedSeries(item.slug);
-                  setSelectedGender("All");
-                }}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.08, duration: 0.7 }}
-                viewport={{ once: true }}
-                className="group text-left bg-brand-cream/50 border border-brand-black/5 p-5 hover:bg-brand-cream transition-all duration-500"
-              >
-                <div className="aspect-[4/5] bg-white overflow-hidden mb-8 border border-brand-black/5 flex items-center justify-center p-2">
-                  <img
-                    src={item.cover}
-                    alt={item.name}
-                    onError={(event) => {
-                      event.currentTarget.style.display = "none";
-                    }}
-                    className="w-full h-full object-contain grayscale-[0.15] group-hover:grayscale-0 group-hover:scale-[1.02] transition-all duration-700"
-                  />
-                </div>
-
-                <p className="text-[9px] uppercase tracking-[0.3em] font-bold opacity-30 mb-4">
-                  {count > 0 ? `${count} pieces` : "Limited drop"}
-                </p>
-
-                <h3 className="text-3xl font-serif italic mb-4 group-hover:text-brand-berry transition-colors">
-                  {item.name}
-                </h3>
-
-                <p className="text-sm text-brand-accent opacity-60 leading-relaxed">
-                  {item.line}
-                </p>
-
-                <p className="mt-8 text-[10px] uppercase tracking-[0.3em] font-bold">
-                  Enter Series →
-                </p>
-              </motion.button>
-            );
-          })}
-        </div>
-      </div>
-    </section>
+      {zoomModal}
+    </>
   );
 }
