@@ -36,28 +36,16 @@ interface PrintifyProduct {
 
 const series = [
   {
-    slug: "seen",
-    name: "The Seen Series",
-    line: "For the ones who refused to disappear quietly.",
-    cover: "/images/seen-series.png",
+    slug: "fruity",
+    name: "The Fruity Series",
+    line: "For the colorful ones growing into themselves, loudly and beautifully.",
+    cover: "/images/fruity-series.png",
   },
   {
-    slug: "brave",
-    name: "The Brave Series",
-    line: "For the quiet kind of brave. The kind nobody claps for, but everything depends on.",
-    cover: "/images/brave-series.png",
-  },
-  {
-    slug: "chaotic",
-    name: "The Chaotic Series",
-    line: "For the ones who turned the mess into identity.",
-    cover: "/images/chaotic-series.png",
-  },
-  {
-    slug: "fruit-loop",
-    name: "The Fruit Loop Series",
-    line: "For the colorful ones. The fruity ones. The beautifully unbothered.",
-    cover: "/images/fruit-loop-series.png",
+    slug: "beautiful-mess",
+    name: "The Beautiful Mess Series",
+    line: "For the ones turning chaos, softness, and survival into a whole mood.",
+    cover: "/images/beautiful-mess-series.png",
   },
 ];
 
@@ -88,10 +76,25 @@ function parseProductTitle(title: string) {
 function getSeriesSlug(seriesName: string) {
   const lower = seriesName.toLowerCase();
 
-  if (lower.includes("seen")) return "seen";
-  if (lower.includes("brave")) return "brave";
-  if (lower.includes("chaos") || lower.includes("chaotic")) return "chaotic";
-  if (lower.includes("fruit")) return "fruit-loop";
+  if (
+    lower.includes("fruity") ||
+    lower.includes("fruit") ||
+    lower.includes("fruit loop")
+  ) {
+    return "fruity";
+  }
+
+  if (
+    lower.includes("beautiful mess") ||
+    lower.includes("messy") ||
+    lower.includes("mess") ||
+    lower.includes("chaos") ||
+    lower.includes("chaotic") ||
+    lower.includes("seen") ||
+    lower.includes("brave")
+  ) {
+    return "beautiful-mess";
+  }
 
   return "archive";
 }
@@ -568,7 +571,7 @@ export default function FeaturedProducts({
           </motion.h2>
 
           <p className="text-brand-accent max-w-xl mx-auto opacity-70">
-            Each drop begins with original TFW artwork and becomes a limited wearable statement.
+            Two moods. One universe. Wearable art for the colorful, the soft, the loud, and the beautifully complicated.
           </p>
 
           {loading && (
@@ -578,7 +581,7 @@ export default function FeaturedProducts({
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {series.map((item, index) => {
             const count = getSeriesCount(item.slug);
 
