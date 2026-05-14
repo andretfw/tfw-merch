@@ -160,12 +160,12 @@ const manualProductConfigs: ManualProductConfig[] = [
     colors: {
       navy: [
         {
-          src: "/images/products/bearing my own fruit/hoodie/navy-front.png",
+          src: "/images/products/bearing-my-own-fruit/hoodie/navy-front.png",
           position: "front",
           is_default: true,
         },
         {
-          src: "/images/products/bearing my own fruit/hoodie/navy-back.png",
+          src: "/images/products/bearing-my-own-fruit/hoodie/navy-back.png",
           position: "back",
           is_default: false,
         },
