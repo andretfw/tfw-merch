@@ -155,16 +155,17 @@ const manualProductConfigs: ManualProductConfig[] = [
       "bearing-my-own-fruit hoodie",
       "bearing own fruit hoodie",
       "own fruit hoodie",
+      "bearing my own fruit",
     ],
     colors: {
       navy: [
         {
-          src: "/images/products/bearing-my-own-fruit/hoodie/navy-front.png",
+          src: "/images/products/bearing my own fruit/hoodie/navy-front.png",
           position: "front",
           is_default: true,
         },
         {
-          src: "/images/products/bearing-my-own-fruit/hoodie/navy-back.png",
+          src: "/images/products/bearing my own fruit/hoodie/navy-back.png",
           position: "back",
           is_default: false,
         },
@@ -406,7 +407,6 @@ export default function FeaturedProducts({
       if (event.key === "ArrowRight") {
         setZoom((current) => {
           if (!current) return current;
-
           return {
             ...current,
             index: (current.index + 1) % current.images.length,
@@ -417,7 +417,6 @@ export default function FeaturedProducts({
       if (event.key === "ArrowLeft") {
         setZoom((current) => {
           if (!current) return current;
-
           return {
             ...current,
             index:
