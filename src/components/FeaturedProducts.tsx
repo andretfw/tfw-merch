@@ -113,10 +113,10 @@ const manualProductConfigs: ManualProductConfig[] = [
     productType: "long-tee",
     seriesSlug: "fruity",
     seriesName: "Fruity",
-    displayName: "The World Is Better With You In It",
+    displayName: "The World Looks Better With You In It",
     gender: "Unisex",
     description:
-      "A limited TFW wearable art piece made to remind someone they matter.",
+      "Heavyweight oversized cotton t-shirt. A limited TFW wearable art piece made to remind someone they matter.",
     match: [
       "world is better with you in it",
       "the world is better with you in it",
