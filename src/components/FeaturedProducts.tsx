@@ -152,43 +152,19 @@ const manualProductConfigs: ManualProductConfig[] = [
       "A limited TFW hoodie from the Fruity Series, made for the ones growing their own way.",
     match: [
       "bearing my own fruit hoodie",
-      "bearing my own fruit",
+      "bearing-my-own-fruit hoodie",
       "bearing own fruit hoodie",
       "own fruit hoodie",
     ],
     colors: {
-      white: [
+      navy: [
         {
-          src: "/images/products/bearing-my-own-fruit/hoodie/black-front.png",
+          src: "/images/products/bearing-my-own-fruit/hoodie/navy-front.png",
           position: "front",
           is_default: true,
         },
         {
-          src: "/images/products/bearing-my-own-fruit/hoodie/black-back.png",
-          position: "back",
-          is_default: false,
-        },
-      ],
-      black: [
-        {
-          src: "/images/products/bearing-my-own-fruit/hoodie/black-front.png",
-          position: "front",
-          is_default: true,
-        },
-        {
-          src: "/images/products/bearing-my-own-fruit/hoodie/black-back.png",
-          position: "back",
-          is_default: false,
-        },
-      ],
-      pink: [
-        {
-          src: "/images/products/bearing-my-own-fruit/hoodie/pink-front.png",
-          position: "front",
-          is_default: true,
-        },
-        {
-          src: "/images/products/bearing-my-own-fruit/hoodie/pink-back.png",
+          src: "/images/products/bearing-my-own-fruit/hoodie/navy-back.png",
           position: "back",
           is_default: false,
         },
@@ -430,6 +406,7 @@ export default function FeaturedProducts({
       if (event.key === "ArrowRight") {
         setZoom((current) => {
           if (!current) return current;
+
           return {
             ...current,
             index: (current.index + 1) % current.images.length,
@@ -440,6 +417,7 @@ export default function FeaturedProducts({
       if (event.key === "ArrowLeft") {
         setZoom((current) => {
           if (!current) return current;
+
           return {
             ...current,
             index:
@@ -459,6 +437,8 @@ export default function FeaturedProducts({
   }, [zoom]);
 
   const productsWithMeta = useMemo(() => {
+    const seenManualProducts = new Set<string>();
+
     const curatedProducts = products
       .map((product): ProductWithMeta | null => {
         const manualConfig = getManualProductConfig(product.title);
@@ -482,7 +462,11 @@ export default function FeaturedProducts({
       })
       .filter(Boolean) as ProductWithMeta[];
 
-    return curatedProducts;
+    return curatedProducts.filter((product) => {
+      if (seenManualProducts.has(product.manualConfig.slug)) return false;
+      seenManualProducts.add(product.manualConfig.slug);
+      return true;
+    });
   }, [products]);
 
   useEffect(() => {
