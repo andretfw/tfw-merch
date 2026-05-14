@@ -159,12 +159,12 @@ const manualProductConfigs: ManualProductConfig[] = [
     colors: {
       white: [
         {
-          src: "/images/products/bearing-my-own-fruit/hoodie/white-front.png",
+          src: "/images/products/bearing-my-own-fruit/hoodie/black-front.png",
           position: "front",
           is_default: true,
         },
         {
-          src: "/images/products/bearing-my-own-fruit/hoodie/white-back.png",
+          src: "/images/products/bearing-my-own-fruit/hoodie/black-back.png",
           position: "back",
           is_default: false,
         },
