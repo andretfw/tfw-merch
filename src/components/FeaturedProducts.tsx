@@ -91,7 +91,7 @@ const manualProductConfigs: ManualProductConfig[] = [
     seriesName: "Fruity",
     displayName: "Don't shrink",
     gender: "Unisex",
-    description: "A limited TFW wearable art piece from the Fruity Series.",
+    description: "Heavyweight oversized cotton T-shirt from the Fruity Series.",
     match: ["dont shrink", "don t shrink"],
     colors: {
       white: [
@@ -116,10 +116,15 @@ const manualProductConfigs: ManualProductConfig[] = [
     displayName: "The World Looks Better With You In It",
     gender: "Unisex",
     description:
-      "Heavyweight oversized cotton t-shirt. A limited TFW wearable art piece made to remind someone they matter.",
+      "A limited long tee made to remind someone they make the world softer, brighter, and better.",
     match: [
       "world is better with you in it",
       "the world is better with you in it",
+      "world looks better with you in it",
+      "the world looks better with you in it",
+      "better with you in it",
+      "with you in it",
+      "world better",
     ],
     colors: {
       white: [
@@ -130,6 +135,60 @@ const manualProductConfigs: ManualProductConfig[] = [
         },
         {
           src: "/images/products/world-better/long-tee/white-back.png",
+          position: "back",
+          is_default: false,
+        },
+      ],
+    },
+  },
+  {
+    slug: "bearing-my-own-fruit-hoodie",
+    productType: "hoodie",
+    seriesSlug: "fruity",
+    seriesName: "Fruity",
+    displayName: "Bearing My Own Fruit Hoodie",
+    gender: "Unisex",
+    description:
+      "A limited TFW hoodie from the Fruity Series, made for the ones growing their own way.",
+    match: [
+      "bearing my own fruit hoodie",
+      "bearing my own fruit",
+      "bearing own fruit hoodie",
+      "own fruit hoodie",
+    ],
+    colors: {
+      white: [
+        {
+          src: "/images/products/bearing-my-own-fruit/hoodie/white-front.png",
+          position: "front",
+          is_default: true,
+        },
+        {
+          src: "/images/products/bearing-my-own-fruit/hoodie/white-back.png",
+          position: "back",
+          is_default: false,
+        },
+      ],
+      black: [
+        {
+          src: "/images/products/bearing-my-own-fruit/hoodie/black-front.png",
+          position: "front",
+          is_default: true,
+        },
+        {
+          src: "/images/products/bearing-my-own-fruit/hoodie/black-back.png",
+          position: "back",
+          is_default: false,
+        },
+      ],
+      pink: [
+        {
+          src: "/images/products/bearing-my-own-fruit/hoodie/pink-front.png",
+          position: "front",
+          is_default: true,
+        },
+        {
+          src: "/images/products/bearing-my-own-fruit/hoodie/pink-back.png",
           position: "back",
           is_default: false,
         },
