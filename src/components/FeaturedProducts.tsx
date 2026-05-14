@@ -40,6 +40,26 @@ interface PrintifyProduct {
   variants: PrintifyVariant[];
 }
 
+interface ManualProductConfig {
+  slug: string;
+  productType: string;
+  seriesSlug: "fruity" | "beautiful-mess";
+  seriesName: string;
+  displayName: string;
+  gender: string;
+  description: string;
+  match: string[];
+  colors: Record<string, ProductImage[]>;
+}
+
+interface ProductWithMeta extends PrintifyProduct {
+  displayName: string;
+  gender: string;
+  seriesName: string;
+  seriesSlug: string;
+  manualConfig: ManualProductConfig;
+}
+
 interface ZoomState {
   images: ProductImage[];
   index: number;
@@ -63,60 +83,135 @@ const series = [
 
 const genderFilters = ["All", "Women", "Men", "Unisex"];
 
+const manualProductConfigs: ManualProductConfig[] = [
+  {
+    slug: "dont-shrink",
+    productType: "oversize-cotton",
+    seriesSlug: "fruity",
+    seriesName: "Fruity",
+    displayName: "Don't shrink",
+    gender: "Unisex",
+    description: "A limited TFW wearable art piece from the Fruity Series.",
+    match: ["dont shrink", "don t shrink"],
+    colors: {
+      white: [
+        {
+          src: "/images/products/dont-shrink/oversize-cotton/white-front.png",
+          position: "front",
+          is_default: true,
+        },
+        {
+          src: "/images/products/dont-shrink/oversize-cotton/white-back.png",
+          position: "back",
+          is_default: false,
+        },
+      ],
+    },
+  },
+  {
+    slug: "world-better",
+    productType: "long-tee",
+    seriesSlug: "fruity",
+    seriesName: "Fruity",
+    displayName: "The World Is Better With You In It",
+    gender: "Unisex",
+    description:
+      "A limited TFW wearable art piece made to remind someone they matter.",
+    match: [
+      "world is better with you in it",
+      "the world is better with you in it",
+    ],
+    colors: {
+      white: [
+        {
+          src: "/images/products/world-better/long-tee/white-front.png",
+          position: "front",
+          is_default: true,
+        },
+        {
+          src: "/images/products/world-better/long-tee/white-back.png",
+          position: "back",
+          is_default: false,
+        },
+      ],
+    },
+  },
+];
+
 function cleanDescription(html: string) {
   return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
-function parseProductTitle(title: string) {
-  const parts = title.split("|").map((part) => part.trim());
-
-  if (parts.length >= 3) {
-    return {
-      seriesName: parts[0],
-      gender: parts[1],
-      displayName: parts.slice(2).join(" | "),
-    };
-  }
-
-  return {
-    seriesName: "Archive Pieces",
-    gender: "Unisex",
-    displayName: title,
-  };
+function normalizeText(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[’']/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-function getSeriesSlug(seriesName: string) {
-  const lower = seriesName.toLowerCase();
+function getManualProductConfig(title: string) {
+  const normalizedTitle = normalizeText(title);
 
-  if (
-    lower.includes("fruity") ||
-    lower.includes("fruit") ||
-    lower.includes("fruit loop")
-  ) {
-    return "fruity";
-  }
+  return manualProductConfigs.find((config) =>
+    config.match.some((term) => normalizedTitle.includes(normalizeText(term)))
+  );
+}
 
-  if (
-    lower.includes("beautiful mess") ||
-    lower.includes("messy") ||
-    lower.includes("mess") ||
-    lower.includes("chaos") ||
-    lower.includes("chaotic") ||
-    lower.includes("seen") ||
-    lower.includes("brave")
-  ) {
-    return "beautiful-mess";
-  }
+function getColorFromVariantTitle(variantTitle: string) {
+  const normalized = normalizeText(variantTitle);
 
-  return "archive";
+  const colors = [
+    "ice grey",
+    "ice gray",
+    "light pink",
+    "white",
+    "black",
+    "pink",
+    "cream",
+    "natural",
+    "beige",
+    "grey",
+    "gray",
+    "navy",
+  ];
+
+  const found = colors.find((color) => normalized.includes(normalizeText(color)));
+
+  if (!found) return "default";
+  if (found === "ice gray" || found === "ice grey") return "ice-grey";
+  if (found === "light pink") return "light-pink";
+  if (found === "gray") return "grey";
+
+  return normalizeText(found).replace(/\s+/g, "-");
+}
+
+function getSizeFromVariantTitle(variantTitle: string) {
+  const parts = variantTitle.split(" / ").map((part) => part.trim());
+
+  const knownSize = parts.find((part) => {
+    const normalized = part.toLowerCase();
+    return ["xs", "s", "m", "l", "xl", "2xl", "3xl", "4xl", "5xl"].includes(
+      normalized
+    );
+  });
+
+  if (knownSize) return knownSize.toUpperCase();
+
+  const normalized = normalizeText(variantTitle);
+  const sizeMatch = normalized.match(/\b(xs|s|m|l|xl|2xl|3xl|4xl|5xl)\b/i);
+
+  return sizeMatch ? sizeMatch[0].toUpperCase() : parts[0] || "Default";
 }
 
 function getVariantInfo(variantTitle: string) {
-  const parts = variantTitle.split(" / ").map((part) => part.trim());
+  const color = getColorFromVariantTitle(variantTitle);
+  const size = getSizeFromVariantTitle(variantTitle);
 
   return {
-    size: parts[0] || "Default",
-    color: parts[1] || "Default",
+    size,
+    color: color === "default" ? "Default" : color,
   };
 }
 
@@ -132,74 +227,80 @@ function uniqueImages(images: ProductImage[]) {
     });
 }
 
-function getGalleryImages(product: PrintifyProduct, selectedVariant?: PrintifyVariant) {
-  const variantImages = selectedVariant?.images || [];
-  const productImages = product.images || [];
-
-  return uniqueImages([
-    ...variantImages,
-    ...(selectedVariant?.image
-      ? [
-          {
-            src: selectedVariant.image,
-            position: "front",
-            is_default: true,
-          },
-        ]
-      : []),
-    ...(product.image
-      ? [
-          {
-            src: product.image,
-            position: "front",
-            is_default: true,
-          },
-        ]
-      : []),
-    ...productImages,
-  ]);
+function orderGalleryImages(galleryImages: ProductImage[]) {
+  return [...galleryImages].sort((a, b) => {
+    if (a.is_default && !b.is_default) return -1;
+    if (!a.is_default && b.is_default) return 1;
+    if (a.position === "front" && b.position !== "front") return -1;
+    if (a.position !== "front" && b.position === "front") return 1;
+    return 0;
+  });
 }
 
-function looksLikeModelImage(image: ProductImage) {
-  const src = image.src.toLowerCase();
-  const position = (image.position || "").toLowerCase();
+function getManualImagesForVariant(
+  product: ProductWithMeta,
+  selectedVariant?: PrintifyVariant
+) {
+  const color = selectedVariant
+    ? getColorFromVariantTitle(selectedVariant.title)
+    : "white";
 
   return (
-    src.includes("model") ||
-    src.includes("lifestyle") ||
-    src.includes("person") ||
-    src.includes("wear") ||
-    src.includes("mockup") ||
-    position.includes("model") ||
-    position.includes("lifestyle")
+    product.manualConfig.colors[color] ||
+    product.manualConfig.colors.white ||
+    Object.values(product.manualConfig.colors)[0] ||
+    []
   );
 }
 
-function getPreferredMainImage(galleryImages: ProductImage[]) {
-  if (galleryImages.length === 0) return "";
+function getGalleryImages(
+  product: ProductWithMeta,
+  selectedVariant?: PrintifyVariant
+) {
+  const manualImages = getManualImagesForVariant(product, selectedVariant);
 
-  const modelImage = galleryImages.find(looksLikeModelImage);
-
-  if (modelImage?.src) {
-    return modelImage.src;
+  if (manualImages.length > 0) {
+    return orderGalleryImages(uniqueImages(manualImages));
   }
 
-  if (galleryImages.length >= 3) {
-    return galleryImages[2].src;
-  }
+  const variantImages = selectedVariant?.images || [];
+  const productImages = product.images || [];
 
-  return galleryImages[0].src;
+  return orderGalleryImages(
+    uniqueImages([
+      ...variantImages,
+      ...(selectedVariant?.image
+        ? [
+            {
+              src: selectedVariant.image,
+              position: "front",
+              is_default: true,
+            },
+          ]
+        : []),
+      ...(product.image
+        ? [
+            {
+              src: product.image,
+              position: "front",
+              is_default: true,
+            },
+          ]
+        : []),
+      ...productImages,
+    ])
+  );
 }
 
-function orderGalleryImages(galleryImages: ProductImage[]) {
-  const preferredSrc = getPreferredMainImage(galleryImages);
+function filterVariantsWithManualImages(product: ProductWithMeta) {
+  const allowedColors = Object.keys(product.manualConfig.colors);
 
-  if (!preferredSrc) return galleryImages;
+  const filtered = (product.variants || []).filter((variant) => {
+    const color = getColorFromVariantTitle(variant.title);
+    return allowedColors.includes(color);
+  });
 
-  const preferred = galleryImages.find((image) => image.src === preferredSrc);
-  const rest = galleryImages.filter((image) => image.src !== preferredSrc);
-
-  return preferred ? [preferred, ...rest] : galleryImages;
+  return filtered.length > 0 ? filtered : product.variants || [];
 }
 
 export default function FeaturedProducts({
@@ -248,40 +349,7 @@ export default function FeaturedProducts({
           throw new Error(data.error || "Could not load products.");
         }
 
-        const loadedProducts: PrintifyProduct[] = data.products || [];
-        setProducts(loadedProducts);
-
-        const defaultVariants: Record<string, number> = {};
-        const defaultImages: Record<string, string> = {};
-
-        loadedProducts.forEach((product) => {
-          if (product.variants?.length > 0) {
-            const firstVariant = product.variants[0];
-            const galleryImages = getGalleryImages(product, firstVariant);
-            const orderedGalleryImages = orderGalleryImages(galleryImages);
-
-            defaultVariants[product.id] = firstVariant.id;
-            defaultImages[product.id] =
-              getPreferredMainImage(orderedGalleryImages) ||
-              firstVariant.image ||
-              firstVariant.images?.[0]?.src ||
-              product.image ||
-              product.images?.[0]?.src ||
-              "";
-          } else {
-            const galleryImages = getGalleryImages(product);
-            const orderedGalleryImages = orderGalleryImages(galleryImages);
-
-            defaultImages[product.id] =
-              getPreferredMainImage(orderedGalleryImages) ||
-              product.image ||
-              product.images?.[0]?.src ||
-              "";
-          }
-        });
-
-        setSelectedVariants(defaultVariants);
-        setSelectedImages(defaultImages);
+        setProducts(data.products || []);
       } catch (err) {
         setApiError(err instanceof Error ? err.message : "Something went wrong.");
       } finally {
@@ -303,7 +371,6 @@ export default function FeaturedProducts({
       if (event.key === "ArrowRight") {
         setZoom((current) => {
           if (!current) return current;
-
           return {
             ...current,
             index: (current.index + 1) % current.images.length,
@@ -314,7 +381,6 @@ export default function FeaturedProducts({
       if (event.key === "ArrowLeft") {
         setZoom((current) => {
           if (!current) return current;
-
           return {
             ...current,
             index:
@@ -334,19 +400,59 @@ export default function FeaturedProducts({
   }, [zoom]);
 
   const productsWithMeta = useMemo(() => {
-    return products.map((product) => {
-      const parsed = parseProductTitle(product.title);
-      const seriesSlug = getSeriesSlug(parsed.seriesName);
+    const curatedProducts = products
+      .map((product): ProductWithMeta | null => {
+        const manualConfig = getManualProductConfig(product.title);
 
-      return {
-        ...product,
-        displayName: parsed.displayName,
-        gender: parsed.gender,
-        seriesName: parsed.seriesName,
-        seriesSlug,
-      };
-    });
+        if (!manualConfig) return null;
+
+        const productWithMeta: ProductWithMeta = {
+          ...product,
+          displayName: manualConfig.displayName,
+          gender: manualConfig.gender,
+          seriesName: manualConfig.seriesName,
+          seriesSlug: manualConfig.seriesSlug,
+          description: manualConfig.description,
+          manualConfig,
+        };
+
+        return {
+          ...productWithMeta,
+          variants: filterVariantsWithManualImages(productWithMeta),
+        };
+      })
+      .filter(Boolean) as ProductWithMeta[];
+
+    return curatedProducts;
   }, [products]);
+
+  useEffect(() => {
+    const defaultVariants: Record<string, number> = {};
+    const defaultImages: Record<string, string> = {};
+
+    productsWithMeta.forEach((product) => {
+      if (product.variants?.length > 0) {
+        const firstVariant = product.variants[0];
+        const galleryImages = getGalleryImages(product, firstVariant);
+
+        defaultVariants[product.id] = firstVariant.id;
+        defaultImages[product.id] =
+          galleryImages[0]?.src ||
+          firstVariant.image ||
+          firstVariant.images?.[0]?.src ||
+          product.image ||
+          "";
+      } else {
+        const galleryImages = getGalleryImages(product);
+
+        defaultImages[product.id] =
+          galleryImages[0]?.src || product.image || product.images?.[0]?.src || "";
+      }
+    });
+
+    setSelectedVariants(defaultVariants);
+    setSelectedImages(defaultImages);
+  }, [productsWithMeta]);
 
   const visibleProducts = productsWithMeta.filter((product) => {
     const matchesSeries = selectedSeries
@@ -378,13 +484,12 @@ export default function FeaturedProducts({
     });
   };
 
-  const handleVariantChange = (product: any, variantId: number) => {
+  const handleVariantChange = (product: ProductWithMeta, variantId: number) => {
     const selectedVariant =
-      product.variants.find((variant: PrintifyVariant) => variant.id === variantId) ||
+      product.variants.find((variant) => variant.id === variantId) ||
       product.variants[0];
 
     const galleryImages = getGalleryImages(product, selectedVariant);
-    const orderedGalleryImages = orderGalleryImages(galleryImages);
 
     setSelectedVariants((prev) => ({
       ...prev,
@@ -394,7 +499,7 @@ export default function FeaturedProducts({
     setSelectedImages((prev) => ({
       ...prev,
       [product.id]:
-        getPreferredMainImage(orderedGalleryImages) ||
+        galleryImages[0]?.src ||
         selectedVariant?.image ||
         selectedVariant?.images?.[0]?.src ||
         product.image ||
@@ -402,7 +507,7 @@ export default function FeaturedProducts({
     }));
   };
 
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: ProductWithMeta) => {
     const selectedVariantId = selectedVariants[product.id];
 
     const selectedVariant =
@@ -417,8 +522,11 @@ export default function FeaturedProducts({
 
     const { size, color } = getVariantInfo(selectedVariant.title);
 
+    const galleryImages = getGalleryImages(product, selectedVariant);
+
     const cartImage =
       selectedImages[product.id] ||
+      galleryImages[0]?.src ||
       selectedVariant.image ||
       selectedVariant.images?.[0]?.src ||
       product.image;
@@ -455,7 +563,7 @@ export default function FeaturedProducts({
     );
   };
 
-  const handleOrderNow = (product: any) => {
+  const handleOrderNow = (product: ProductWithMeta) => {
     handleAddToCart(product);
     onOpenCheckout();
   };
@@ -478,6 +586,7 @@ export default function FeaturedProducts({
           <p className="text-[10px] uppercase tracking-[0.3em] opacity-50 font-bold">
             Product view
           </p>
+
           <h3 className="mt-2 text-2xl md:text-4xl font-serif italic">
             {zoom.title}
           </h3>
@@ -626,12 +735,6 @@ export default function FeaturedProducts({
                 <p className="font-serif italic text-2xl opacity-40">
                   No pieces in this selection yet.
                 </p>
-
-                <p className="mt-4 text-sm text-brand-accent opacity-50">
-                  <span className="font-bold">
-                    {currentSeries.name} | Women | Product Name
-                  </span>
-                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-12">
@@ -643,17 +746,14 @@ export default function FeaturedProducts({
                       (variant) => variant.id === selectedVariantId
                     ) || product.variants[0];
 
-                  const galleryImages = orderGalleryImages(
-                    getGalleryImages(product, selectedVariant)
-                  );
+                  const galleryImages = getGalleryImages(product, selectedVariant);
 
                   const selectedImage =
                     selectedImages[product.id] ||
-                    getPreferredMainImage(galleryImages) ||
+                    galleryImages[0]?.src ||
                     selectedVariant?.image ||
                     selectedVariant?.images?.[0]?.src ||
                     product.image ||
-                    galleryImages[0]?.src ||
                     "";
 
                   const description = cleanDescription(product.description);
@@ -816,7 +916,8 @@ export default function FeaturedProducts({
             </motion.h2>
 
             <p className="text-brand-accent max-w-xl mx-auto opacity-70">
-              Two moods. One universe. Wearable art for the colorful, the soft, the loud, and the beautifully complicated.
+              Two moods. One universe. Wearable art for the colorful, the soft,
+              the loud, and the beautifully complicated.
             </p>
 
             {loading && (
