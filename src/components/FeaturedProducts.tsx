@@ -172,6 +172,36 @@ const manualProductConfigs: ManualProductConfig[] = [
       ],
     },
   },
+  {
+  slug: "too-perfect",
+  productType: "all-over-print-tshirt",
+  seriesSlug: "beautiful-mess",
+  seriesName: "Beautiful Mess",
+  displayName: "Too Perfect",
+  gender: "Female",
+  description:
+    "A limited Beautiful Mess wearable art piece for the ones who make chaos look expensive.",
+  match: [
+    "too perfect",
+    "the beautiful mess female too perfect",
+    "beautiful mess female too perfect",
+    "beautiful mess too perfect",
+  ],
+  colors: {
+    white: [
+      {
+        src: "/images/products/too-perfect/all-over-print-tshirt/white-front.png",
+        position: "front",
+        is_default: true,
+      },
+      {
+        src: "/images/products/too-perfect/all-over-print-tshirt/white-back.png",
+        position: "back",
+        is_default: false,
+      },
+    ],
+  },
+},
 ];
 
 function cleanDescription(html: string) {
