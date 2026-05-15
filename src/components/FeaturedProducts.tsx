@@ -49,7 +49,6 @@ interface ManualProductConfig {
   gender: string;
   description: string;
   match: string[];
-  requiredTerms?: string[];
   colors: Record<string, ProductImage[]>;
 }
 
@@ -158,7 +157,6 @@ const manualProductConfigs: ManualProductConfig[] = [
       "own fruit hoodie",
       "bearing my own fruit",
     ],
-    requiredTerms: ["hoodie"],
     colors: {
       navy: [
         {
@@ -192,17 +190,9 @@ function normalizeText(text: string) {
 function getManualProductConfig(title: string) {
   const normalizedTitle = normalizeText(title);
 
-  return manualProductConfigs.find((config) => {
-    const matchesTitle = config.match.some((term) =>
-      normalizedTitle.includes(normalizeText(term))
-    );
-
-    const hasRequiredTerms = (config.requiredTerms || []).every((term) =>
-      normalizedTitle.includes(normalizeText(term))
-    );
-
-    return matchesTitle && hasRequiredTerms;
-  });
+  return manualProductConfigs.find((config) =>
+    config.match.some((term) => normalizedTitle.includes(normalizeText(term)))
+  );
 }
 
 function getColorFromVariantTitle(variantTitle: string) {
@@ -541,14 +531,12 @@ export default function FeaturedProducts({
     const finalImages =
       selectedIndex >= 0 || !selectedImage
         ? orderedImages
-        : uniqueImages([{ src: selectedImage, position: "selected", is_default: true }, ...orderedImages]);
+        : uniqueImages([
+            { src: selectedImage, position: "selected", is_default: true },
+            ...orderedImages,
+          ]);
 
-    const finalIndex =
-      selectedIndex >= 0
-        ? selectedIndex
-        : selectedImage
-          ? 0
-          : 0;
+    const finalIndex = selectedIndex >= 0 ? selectedIndex : 0;
 
     setZoom({
       images: finalImages,
