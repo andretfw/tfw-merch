@@ -726,7 +726,7 @@ export default function FeaturedProducts({
           <img
             src={zoom.images[zoom.index]?.src}
             alt={`${zoom.title} large view`}
-            className="max-h-[72vh] max-w-full object-contain"
+            className="max-h-[72vh] max-w-full object-contain bg-white p-4 rounded-sm"
           />
 
           {zoom.images.length > 1 && (
