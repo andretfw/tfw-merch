@@ -173,35 +173,70 @@ const manualProductConfigs: ManualProductConfig[] = [
     },
   },
   {
-  slug: "too-perfect",
-  productType: "all-over-print-tshirt",
-  seriesSlug: "beautiful-mess",
-  seriesName: "Beautiful Mess",
-  displayName: "Too Perfect",
-  gender: "Women",
-  description:
-    "A limited Beautiful Mess wearable art piece for the ones who make chaos look expensive.",
-  match: [
-    "too perfect",
-    "the beautiful mess Women too perfect",
-    "beautiful mess women too perfect",
-    "beautiful mess too perfect",
-  ],
-  colors: {
-    white: [
-      {
-        src: "/images/products/too-perfect/all-over-print-tshirt/white-front.png",
-        position: "front",
-        is_default: true,
-      },
-      {
-        src: "/images/products/too-perfect/all-over-print-tshirt/white-back.png",
-        position: "back",
-        is_default: false,
-      },
+    slug: "too-perfect",
+    productType: "all-over-print-tshirt",
+    seriesSlug: "beautiful-mess",
+    seriesName: "Beautiful Mess",
+    displayName: "Too Perfect",
+    gender: "Women",
+    description:
+      "A limited Beautiful Mess wearable art piece for the ones who make chaos look expensive.",
+    match: [
+      "too perfect",
+      "the beautiful mess female too perfect",
+      "beautiful mess female too perfect",
+      "beautiful mess too perfect",
+      "the beautiful mess too perfect",
     ],
+    colors: {
+      white: [
+        {
+          src: "/images/products/too-perfect/all-over-print-tshirt/white-front.png",
+          position: "front",
+          is_default: true,
+        },
+        {
+          src: "/images/products/too-perfect/all-over-print-tshirt/white-back.png",
+          position: "back",
+          is_default: false,
+        },
+      ],
+    },
   },
-},
+  {
+    slug: "its-fine",
+    productType: "hoodie",
+    seriesSlug: "beautiful-mess",
+    seriesName: "Beautiful Mess",
+    displayName: "It's Fine",
+    gender: "Unisex",
+    description:
+      "A limited Beautiful Mess hoodie for the ones holding it together with style.",
+    match: [
+      "its fine",
+      "it's fine",
+      "the beautiful mess unisex its fine",
+      "the beautiful mess unisex it's fine",
+      "beautiful mess unisex its fine",
+      "beautiful mess unisex it's fine",
+      "beautiful mess its fine",
+      "beautiful mess it's fine",
+    ],
+    colors: {
+      black: [
+        {
+          src: "/images/products/its-fine/hoodie/black-front.png",
+          position: "front",
+          is_default: true,
+        },
+        {
+          src: "/images/products/its-fine/hoodie/black-back.png",
+          position: "back",
+          is_default: false,
+        },
+      ],
+    },
+  },
 ];
 
 function cleanDescription(html: string) {
@@ -258,7 +293,6 @@ function getSizeFromVariantTitle(variantTitle: string) {
 
   const knownSize = parts.find((part) => {
     const normalized = part.toLowerCase();
-
     return ["xs", "s", "m", "l", "xl", "2xl", "3xl", "4xl", "5xl"].includes(
       normalized
     );
@@ -289,7 +323,6 @@ function uniqueImages(images: ProductImage[]) {
     .filter((image) => image?.src)
     .filter((image) => {
       if (seen.has(image.src)) return false;
-
       seen.add(image.src);
       return true;
     });
@@ -301,7 +334,6 @@ function orderGalleryImages(galleryImages: ProductImage[]) {
     if (!a.is_default && b.is_default) return 1;
     if (a.position === "front" && b.position !== "front") return -1;
     if (a.position !== "front" && b.position === "front") return 1;
-
     return 0;
   });
 }
@@ -312,12 +344,11 @@ function getManualImagesForVariant(
 ) {
   const color = selectedVariant
     ? getColorFromVariantTitle(selectedVariant.title)
-    : "navy";
+    : "white";
 
   return (
     product.manualConfig.colors[color] ||
     product.manualConfig.colors.white ||
-    product.manualConfig.colors.navy ||
     Object.values(product.manualConfig.colors)[0] ||
     []
   );
@@ -367,7 +398,6 @@ function filterVariantsWithManualImages(product: ProductWithMeta) {
 
   const filtered = (product.variants || []).filter((variant) => {
     const color = getColorFromVariantTitle(variant.title);
-
     return allowedColors.includes(color);
   });
 
@@ -442,7 +472,6 @@ export default function FeaturedProducts({
       if (event.key === "ArrowRight") {
         setZoom((current) => {
           if (!current) return current;
-
           return {
             ...current,
             index: (current.index + 1) % current.images.length,
@@ -453,7 +482,6 @@ export default function FeaturedProducts({
       if (event.key === "ArrowLeft") {
         setZoom((current) => {
           if (!current) return current;
-
           return {
             ...current,
             index:
@@ -500,7 +528,6 @@ export default function FeaturedProducts({
 
     return curatedProducts.filter((product) => {
       if (seenManualProducts.has(product.manualConfig.slug)) return false;
-
       seenManualProducts.add(product.manualConfig.slug);
       return true;
     });
@@ -553,24 +580,13 @@ export default function FeaturedProducts({
 
   const openZoom = (images: ProductImage[], selectedImage: string, title: string) => {
     const orderedImages = orderGalleryImages(uniqueImages(images));
-
     const selectedIndex = orderedImages.findIndex(
       (image) => image.src === selectedImage
     );
 
-    const finalImages =
-      selectedIndex >= 0 || !selectedImage
-        ? orderedImages
-        : uniqueImages([
-            { src: selectedImage, position: "selected", is_default: true },
-            ...orderedImages,
-          ]);
-
-    const finalIndex = selectedIndex >= 0 ? selectedIndex : 0;
-
     setZoom({
-      images: finalImages,
-      index: finalIndex,
+      images: orderedImages,
+      index: selectedIndex >= 0 ? selectedIndex : 0,
       title,
     });
   };
@@ -707,13 +723,11 @@ export default function FeaturedProducts({
             </button>
           )}
 
-          <div className="w-full h-full flex items-center justify-center">
-            <img
-              src={zoom.images[zoom.index]?.src || ""}
-              alt={`${zoom.title} large view`}
-              className="max-h-[72vh] max-w-full object-contain bg-white"
-            />
-          </div>
+          <img
+            src={zoom.images[zoom.index]?.src}
+            alt={`${zoom.title} large view`}
+            className="max-h-[72vh] max-w-full object-contain"
+          />
 
           {zoom.images.length > 1 && (
             <button
