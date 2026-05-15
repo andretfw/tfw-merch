@@ -293,6 +293,7 @@ function getSizeFromVariantTitle(variantTitle: string) {
 
   const knownSize = parts.find((part) => {
     const normalized = part.toLowerCase();
+
     return ["xs", "s", "m", "l", "xl", "2xl", "3xl", "4xl", "5xl"].includes(
       normalized
     );
@@ -323,6 +324,7 @@ function uniqueImages(images: ProductImage[]) {
     .filter((image) => image?.src)
     .filter((image) => {
       if (seen.has(image.src)) return false;
+
       seen.add(image.src);
       return true;
     });
@@ -334,6 +336,7 @@ function orderGalleryImages(galleryImages: ProductImage[]) {
     if (!a.is_default && b.is_default) return 1;
     if (a.position === "front" && b.position !== "front") return -1;
     if (a.position !== "front" && b.position === "front") return 1;
+
     return 0;
   });
 }
@@ -398,6 +401,7 @@ function filterVariantsWithManualImages(product: ProductWithMeta) {
 
   const filtered = (product.variants || []).filter((variant) => {
     const color = getColorFromVariantTitle(variant.title);
+
     return allowedColors.includes(color);
   });
 
@@ -426,6 +430,64 @@ export default function FeaturedProducts({
 
   void filterCategory;
   void onClearFilter;
+
+  const scrollToShop = () => {
+    setTimeout(() => {
+      const shopSection = document.getElementById("shop");
+      shopSection?.scrollIntoView({ behavior: "smooth" });
+    }, 0);
+  };
+
+  const openSeriesBySlug = (slug: string) => {
+    setSelectedSeries(slug);
+    setSelectedGender("All");
+
+    window.history.pushState({}, "", `#shop-${slug}`);
+    scrollToShop();
+  };
+
+  const clearSeriesSelection = () => {
+    setSelectedSeries(null);
+    setSelectedGender("All");
+
+    window.history.pushState({}, "", "#shop");
+    scrollToShop();
+  };
+
+  useEffect(() => {
+    const syncSeriesFromHash = () => {
+      const hash = window.location.hash.replace("#", "");
+
+      const matchingSeries = series.find((item) => hash === `shop-${item.slug}`);
+
+      if (matchingSeries) {
+        setSelectedSeries(matchingSeries.slug);
+        setSelectedGender("All");
+        scrollToShop();
+        return;
+      }
+
+      if (
+        !hash ||
+        hash === "home" ||
+        hash === "shop" ||
+        !hash.startsWith("shop-")
+      ) {
+        setSelectedSeries(null);
+        setSelectedGender("All");
+      }
+    };
+
+    syncSeriesFromHash();
+
+    window.addEventListener("hashchange", syncSeriesFromHash);
+    window.addEventListener("popstate", syncSeriesFromHash);
+
+    return () => {
+      window.removeEventListener("hashchange", syncSeriesFromHash);
+      window.removeEventListener("popstate", syncSeriesFromHash);
+    };
+  }, []);
 
   useEffect(() => {
     async function loadProducts() {
@@ -472,6 +534,7 @@ export default function FeaturedProducts({
       if (event.key === "ArrowRight") {
         setZoom((current) => {
           if (!current) return current;
+
           return {
             ...current,
             index: (current.index + 1) % current.images.length,
@@ -482,6 +545,7 @@ export default function FeaturedProducts({
       if (event.key === "ArrowLeft") {
         setZoom((current) => {
           if (!current) return current;
+
           return {
             ...current,
             index:
@@ -528,6 +592,7 @@ export default function FeaturedProducts({
 
     return curatedProducts.filter((product) => {
       if (seenManualProducts.has(product.manualConfig.slug)) return false;
+
       seenManualProducts.add(product.manualConfig.slug);
       return true;
     });
@@ -580,6 +645,7 @@ export default function FeaturedProducts({
 
   const openZoom = (images: ProductImage[], selectedImage: string, title: string) => {
     const orderedImages = orderGalleryImages(uniqueImages(images));
+
     const selectedIndex = orderedImages.findIndex(
       (image) => image.src === selectedImage
     );
@@ -791,10 +857,7 @@ export default function FeaturedProducts({
             <div className="mb-16 text-center relative z-10">
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedSeries(null);
-                  setSelectedGender("All");
-                }}
+                onClick={clearSeriesSelection}
                 className="mb-10 text-[10px] uppercase tracking-[0.3em] font-bold opacity-40 hover:opacity-100 transition-opacity"
               >
                 ← Back to Limited Series
@@ -1042,10 +1105,7 @@ export default function FeaturedProducts({
                 <motion.button
                   key={item.slug}
                   type="button"
-                  onClick={() => {
-                    setSelectedSeries(item.slug);
-                    setSelectedGender("All");
-                  }}
+                  onClick={() => openSeriesBySlug(item.slug)}
                   initial={{ opacity: 0, y: 18 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.08, duration: 0.7 }}
