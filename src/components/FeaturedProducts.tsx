@@ -49,6 +49,7 @@ interface ManualProductConfig {
   gender: string;
   description: string;
   match: string[];
+  requiredTerms?: string[];
   colors: Record<string, ProductImage[]>;
 }
 
@@ -157,6 +158,7 @@ const manualProductConfigs: ManualProductConfig[] = [
       "own fruit hoodie",
       "bearing my own fruit",
     ],
+    requiredTerms: ["hoodie"],
     colors: {
       navy: [
         {
@@ -190,9 +192,17 @@ function normalizeText(text: string) {
 function getManualProductConfig(title: string) {
   const normalizedTitle = normalizeText(title);
 
-  return manualProductConfigs.find((config) =>
-    config.match.some((term) => normalizedTitle.includes(normalizeText(term)))
-  );
+  return manualProductConfigs.find((config) => {
+    const matchesTitle = config.match.some((term) =>
+      normalizedTitle.includes(normalizeText(term))
+    );
+
+    const hasRequiredTerms = (config.requiredTerms || []).every((term) =>
+      normalizedTitle.includes(normalizeText(term))
+    );
+
+    return matchesTitle && hasRequiredTerms;
+  });
 }
 
 function getColorFromVariantTitle(variantTitle: string) {
@@ -228,6 +238,7 @@ function getSizeFromVariantTitle(variantTitle: string) {
 
   const knownSize = parts.find((part) => {
     const normalized = part.toLowerCase();
+
     return ["xs", "s", "m", "l", "xl", "2xl", "3xl", "4xl", "5xl"].includes(
       normalized
     );
@@ -258,6 +269,7 @@ function uniqueImages(images: ProductImage[]) {
     .filter((image) => image?.src)
     .filter((image) => {
       if (seen.has(image.src)) return false;
+
       seen.add(image.src);
       return true;
     });
@@ -269,6 +281,7 @@ function orderGalleryImages(galleryImages: ProductImage[]) {
     if (!a.is_default && b.is_default) return 1;
     if (a.position === "front" && b.position !== "front") return -1;
     if (a.position !== "front" && b.position === "front") return 1;
+
     return 0;
   });
 }
@@ -279,11 +292,12 @@ function getManualImagesForVariant(
 ) {
   const color = selectedVariant
     ? getColorFromVariantTitle(selectedVariant.title)
-    : "white";
+    : "navy";
 
   return (
     product.manualConfig.colors[color] ||
     product.manualConfig.colors.white ||
+    product.manualConfig.colors.navy ||
     Object.values(product.manualConfig.colors)[0] ||
     []
   );
@@ -333,6 +347,7 @@ function filterVariantsWithManualImages(product: ProductWithMeta) {
 
   const filtered = (product.variants || []).filter((variant) => {
     const color = getColorFromVariantTitle(variant.title);
+
     return allowedColors.includes(color);
   });
 
@@ -407,6 +422,7 @@ export default function FeaturedProducts({
       if (event.key === "ArrowRight") {
         setZoom((current) => {
           if (!current) return current;
+
           return {
             ...current,
             index: (current.index + 1) % current.images.length,
@@ -417,6 +433,7 @@ export default function FeaturedProducts({
       if (event.key === "ArrowLeft") {
         setZoom((current) => {
           if (!current) return current;
+
           return {
             ...current,
             index:
@@ -463,6 +480,7 @@ export default function FeaturedProducts({
 
     return curatedProducts.filter((product) => {
       if (seenManualProducts.has(product.manualConfig.slug)) return false;
+
       seenManualProducts.add(product.manualConfig.slug);
       return true;
     });
@@ -515,13 +533,26 @@ export default function FeaturedProducts({
 
   const openZoom = (images: ProductImage[], selectedImage: string, title: string) => {
     const orderedImages = orderGalleryImages(uniqueImages(images));
+
     const selectedIndex = orderedImages.findIndex(
       (image) => image.src === selectedImage
     );
 
+    const finalImages =
+      selectedIndex >= 0 || !selectedImage
+        ? orderedImages
+        : uniqueImages([{ src: selectedImage, position: "selected", is_default: true }, ...orderedImages]);
+
+    const finalIndex =
+      selectedIndex >= 0
+        ? selectedIndex
+        : selectedImage
+          ? 0
+          : 0;
+
     setZoom({
-      images: orderedImages,
-      index: selectedIndex >= 0 ? selectedIndex : 0,
+      images: finalImages,
+      index: finalIndex,
       title,
     });
   };
@@ -658,11 +689,13 @@ export default function FeaturedProducts({
             </button>
           )}
 
-          <img
-            src={zoom.images[zoom.index]?.src}
-            alt={`${zoom.title} large view`}
-            className="max-h-[72vh] max-w-full object-contain"
-          />
+          <div className="w-full h-full flex items-center justify-center">
+            <img
+              src={zoom.images[zoom.index]?.src || ""}
+              alt={`${zoom.title} large view`}
+              className="max-h-[72vh] max-w-full object-contain bg-white"
+            />
+          </div>
 
           {zoom.images.length > 1 && (
             <button
