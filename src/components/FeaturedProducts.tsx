@@ -178,13 +178,13 @@ const manualProductConfigs: ManualProductConfig[] = [
   seriesSlug: "beautiful-mess",
   seriesName: "Beautiful Mess",
   displayName: "Too Perfect",
-  gender: "Female",
+  gender: "Women",
   description:
     "A limited Beautiful Mess wearable art piece for the ones who make chaos look expensive.",
   match: [
     "too perfect",
-    "the beautiful mess female too perfect",
-    "beautiful mess female too perfect",
+    "the beautiful mess Women too perfect",
+    "beautiful mess women too perfect",
     "beautiful mess too perfect",
   ],
   colors: {
